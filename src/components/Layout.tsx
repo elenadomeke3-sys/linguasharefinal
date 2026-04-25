@@ -43,7 +43,8 @@ export default function Layout() {
           <div className="flex items-center gap-4">
             {isAuthenticated && user ? (
               <>
-                <div className="flex items-center gap-3 px-3 py-1.5 bg-muted/50 rounded-full">
+              <Link to="/profile">
+                <div className="flex items-center gap-3 px-3 py-1.5 bg-muted/50 rounded-full hover:bg-muted/70 transition-colors cursor-pointer">
                   {user.avatar ? (
                     <img 
                       src={user.avatar} 
@@ -62,6 +63,7 @@ export default function Layout() {
                     </p>
                   </div>
                 </div>
+              </Link>
                 <Link to="/dashboard">
                   <Button variant="outline" size="sm">
                     <Plus className="h-4 w-4 mr-1" />

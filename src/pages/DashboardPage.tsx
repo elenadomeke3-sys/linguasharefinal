@@ -8,13 +8,7 @@ import { useUserStore } from "@/store";
 import ProfileEditor from "@/components/ProfileEditor";
 import { X } from "lucide-react";
 import { Input } from "@/components/Input";
-
-const MOCK_MATERIALS = [
-  { id: "1", title: "Ćwiczenia: Present Perfect vs Past Simple", language: "Angielski", level: "B1", downloads: 45, averageRating: 4.5 },
-  { id: "2", title: "Fiszki: 100 najważniejszych czasowników nieregularnych", language: "Angielski", level: "A2", downloads: 128, averageRating: 4.8 },
-  { id: "3", title: "Quiz: Czasowniki Phrasal (część 1)", language: "Angielski", level: "B2", downloads: 67, averageRating: 4.3 },
-  { id: "4", title: "Podręcznik: Słownictwo biznesowe - Meetings", language: "Angielski", level: "C1", downloads: 34, averageRating: 4.6 },
-];
+import { materials } from "@/data/materials";
 
 const MOCK_COLLECTIONS = [
   { id: "1", name: "Gramatyka: Czasowniki Modalne", materialsCount: 12 },
@@ -84,13 +78,15 @@ export default function DashboardPage() {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                    {user.avatar ? (
-                      <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-xl font-medium text-primary">{user.name[0]}</span>
-                    )}
-                  </div>
+                  <Link to="/profile">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xl font-medium text-primary">{user.name[0]}</span>
+                      )}
+                    </div>
+                  </Link>
                   <div>
                     <p className="font-medium">{user.name}</p>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
@@ -164,11 +160,12 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {MOCK_MATERIALS.map((m) => (
-                    <div key={m.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-4"><div className="w-12 h-12 bg-muted flex items-center justify-center rounded"><FileText className="h-6 w-6 text-muted-foreground" /></div>
+                   {materials.map((m) => (
+                     <div key={m.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <Link to={`/materials/${m.id}`} className="flex items-center gap-4 flex-1">
+                        <div className="w-12 h-12 bg-muted flex items-center justify-center rounded"><FileText className="h-6 w-6 text-muted-foreground" /></div>
                         <div><p className="font-medium">{m.title}</p><div className="flex items-center gap-3 text-sm text-muted-foreground"><span>{m.language} {m.level}</span><span>⬇ {m.downloads}</span><span>⭐ {m.averageRating}</span></div></div>
-                      </div>
+                      </Link>
                       <Button variant="ghost" size="sm">Edytuj</Button>
                     </div>
                   ))}

@@ -10,6 +10,7 @@ import PricingPage from "./pages/PricingPage";
 import AboutPage from "./pages/AboutPage";
 import FAQPage from "./pages/FAQPage";
 import ContactPage from "./pages/ContactPage";
+import UserProfilePage from "./pages/UserProfilePage";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="about" element={<AboutPage />} />
         <Route path="faq" element={<FAQPage />} />
         <Route path="contact" element={<ContactPage />} />
+        <Route path="profile" element={<UserProfilePage />} />
       </Route>
     </Routes>
   );

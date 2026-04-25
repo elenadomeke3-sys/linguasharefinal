@@ -15,39 +15,7 @@ import {
   Lock,
 } from "lucide-react";
 import { useUserStore } from "@/store";
-
-interface Material {
-  id: string;
-  title: string;
-  description: string;
-  language: string;
-  level: string;
-  type: string;
-  tags: string[];
-  isPremium: boolean;
-  downloads: number;
-  createdAt: string;
-  author: { name: string };
-  averageRating: number;
-  totalRatings: number;
-}
-
-const MOCK_MATERIAL: Material = {
-  id: "1",
-  title: "Ćwiczenia na czas Present Perfect",
-  description:
-    "Zestaw ćwiczeń z gramatyki angielskiej dla średniozaawansowanych. Materiał zawiera 50 ćwiczeń z kluczem odpowiedzi, idealny do pracy w domu lub na lekcji.",
-  language: "Angielski",
-  level: "B1",
-  type: "WORKSHEET",
-  tags: ["gramatyka", "czasowniki", "present-perfect"],
-  isPremium: false,
-  downloads: 45,
-  createdAt: "2026-04-10",
-  author: { name: "Marta Kowalska" },
-  averageRating: 4.5,
-  totalRatings: 12,
-};
+import { materials, getMaterialById } from "@/data/materials";
 
 const typeLabels: Record<string, string> = {
   WORKSHEET: "Arkusz ćwiczeń",
@@ -60,7 +28,7 @@ export default function MaterialDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated, recordDownload, getAvailableDownloads } = useUserStore();
-  const [material, setMaterial] = useState<Material | null>(null);
+  const [material, setMaterial] = useState(materials[0]);
   const [isLoading, setIsLoading] = useState(true);
   const [userRating, setUserRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -75,7 +43,8 @@ export default function MaterialDetailPage() {
   useEffect(() => {
     setIsLoading(true);
     setTimeout(() => {
-      setMaterial(MOCK_MATERIAL);
+      const foundMaterial = getMaterialById(id || "");
+      setMaterial(foundMaterial || materials[0]);
       setIsLoading(false);
     }, 300);
   }, [id]);
@@ -91,12 +60,12 @@ export default function MaterialDetailPage() {
       return;
     }
     
-      const canDownloadResult = recordDownload(id || "");
-      if (!canDownloadResult) {
-        const available = getAvailableDownloads();
-        setDownloadError(`Osiągnąłeś limit pobrań. Dostępne ${formatDownloads(available)}. Zaktualizuj do Premium!`);
-        return;
-      }
+    const canDownloadResult = recordDownload(id || "");
+    if (!canDownloadResult) {
+      const available = getAvailableDownloads();
+      setDownloadError(`Osiągnąłeś limit pobrań. Dostępne ${formatDownloads(available)}. Zaktualizuj do Premium!`);
+      return;
+    }
     
     setDownloadError(null);
     alert("Pobieranie materiału...");
@@ -196,7 +165,7 @@ export default function MaterialDetailPage() {
               </div>
 
               <div className="flex flex-wrap gap-2 mb-6">
-                {material.tags.map((tag) => (
+                {material.tags.map((tag: string) => (
                   <Badge key={tag} variant="outline" className="text-xs">
                     {tag}
                   </Badge>
@@ -301,7 +270,7 @@ export default function MaterialDetailPage() {
                   Pozostało {formatDownloads(getAvailableDownloads())} w tym miesiącu
                 </div>
               )}
-
+              
               {downloadError && (
                 <div className="text-sm text-red-500 text-center py-2 bg-red-50 rounded">
                   {downloadError}
