@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/Card";
 import { Upload, FileText, X, CheckCircle2, Loader2 } from "lucide-react";
+import { materials } from "@/data/materials";
 
 const LANGUAGES = [
   { value: "angielski", label: "Angielski" },
@@ -65,6 +66,10 @@ const TYPE_PATTERNS: Record<string, string> = {
   prezentacja: "PRESENTATION",
   slajdy: "PRESENTATION",
 };
+
+function generateId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
 
 function autoDetectTags(title: string): { level: string; type: string; confidence: number } {
   const lower = title.toLowerCase();
@@ -137,9 +142,30 @@ export default function UploadPage() {
 
     setIsLoading(true);
     setTimeout(() => {
+      // Tworzymy nowy materiał
+      const now = new Date().toISOString().split('T')[0];
+      const newMaterial = {
+        id: generateId(),
+        title: formData.title,
+        description: formData.description || "Brak opisu",
+        language: formData.language,
+        level: formData.level,
+        type: formData.type,
+        tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()) : [],
+        isPremium: formData.isPremium,
+        downloads: 0,
+        createdAt: now,
+        author: { name: "Użytkownik" }, // W rzeczywistej aplikacji pobierane zalogowanego usera
+        averageRating: 0,
+        totalRatings: 0,
+      };
+
+      // Dodajemy do bazy materiałów
+      materials.push(newMaterial);
+
       setIsLoading(false);
       setIsSuccess(true);
-      setTimeout(() => navigate("/dashboard"), 2000);
+      setTimeout(() => navigate("/materials"), 2000);
     }, 1500);
   };
 
@@ -249,102 +275,102 @@ export default function UploadPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Język *</label>
-                    <select
-                      className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={formData.language}
-                      onChange={(e) =>
-                        setFormData({ ...formData, language: e.target.value })
-                      }
-                      required
-                    >
-                      <option value="">Wybierz</option>
-                      {LANGUAGES.map((l) => (
-                        <option key={l.value} value={l.value}>
-                          {l.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                   <div className="space-y-2">
+                     <label className="text-sm font-medium">Język *</label>
+                     <select
+                       className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm w-full truncate"
+                       value={formData.language}
+                       onChange={(e) =>
+                         setFormData({ ...formData, language: e.target.value })
+                       }
+                       required
+                     >
+                       <option value="">Wybierz</option>
+                       {LANGUAGES.map((l) => (
+                         <option key={l.value} value={l.value}>
+                           {l.label}
+                         </option>
+                       ))}
+                     </select>
+                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">Poziom *</label>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-[10px] leading-tight text-muted-foreground whitespace-nowrap px-2"
-                        onClick={() => {
-                          if (!formData.title) {
-                            alert("Najpierw wpisz tytuł materiału");
-                            return;
-                          }
-                          setIsAutoTagging(true);
-                          setTimeout(() => {
-                            const tags = autoDetectTags(formData.title);
-                            if (tags.level) {
-                              setFormData((prev) => ({
-                                ...prev,
-                                level: tags.level,
-                              }));
-                            }
-                            if (tags.type) {
-                              setFormData((prev) => ({
-                                ...prev,
-                                type: tags.type,
-                              }));
-                            }
-                            setIsAutoTagging(false);
-                          }, 500);
-                        }}
-                        disabled={isAutoTagging}
-                      >
-                        {isAutoTagging ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          "Auto"
-                        )}
-                      </Button>
-                    </div>
-                    <select
-                      className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={formData.level}
-                      onChange={(e) =>
-                        setFormData({ ...formData, level: e.target.value })
-                      }
-                      required
-                    >
-                      <option value="">Wybierz</option>
-                      {LEVELS.map((l) => (
-                        <option key={l.value} value={l.value}>
-                          {l.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                   <div className="space-y-2">
+                     <div className="flex items-center justify-between mb-1">
+                       <label className="text-sm font-medium truncate">Poziom *</label>
+                       <Button
+                         type="button"
+                         variant="ghost"
+                         size="sm"
+                         className="h-6 text-[10px] leading-tight text-muted-foreground whitespace-nowrap px-2 flex-shrink-0 ml-2"
+                         onClick={() => {
+                           if (!formData.title) {
+                             alert("Najpierw wpisz tytuł materiału");
+                             return;
+                           }
+                           setIsAutoTagging(true);
+                           setTimeout(() => {
+                             const tags = autoDetectTags(formData.title);
+                             if (tags.level) {
+                               setFormData((prev) => ({
+                                 ...prev,
+                                 level: tags.level,
+                               }));
+                             }
+                             if (tags.type) {
+                               setFormData((prev) => ({
+                                 ...prev,
+                                 type: tags.type,
+                               }));
+                             }
+                             setIsAutoTagging(false);
+                           }, 500);
+                         }}
+                         disabled={isAutoTagging}
+                       >
+                         {isAutoTagging ? (
+                           <Loader2 className="h-3 w-3 animate-spin" />
+                         ) : (
+                           "Auto"
+                         )}
+                       </Button>
+                     </div>
+                     <select
+                       className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm w-full truncate"
+                       value={formData.level}
+                       onChange={(e) =>
+                         setFormData({ ...formData, level: e.target.value })
+                       }
+                       required
+                     >
+                       <option value="">Wybierz</option>
+                       {LEVELS.map((l) => (
+                         <option key={l.value} value={l.value}>
+                           {l.label}
+                         </option>
+                       ))}
+                     </select>
+                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Typ *</label>
-                    <select
-                      className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={formData.type}
-                      onChange={(e) =>
-                        setFormData({ ...formData, type: e.target.value })
-                      }
-                      required
-                    >
-                      <option value="">Wybierz</option>
-                      {TYPES.map((t) => (
-                        <option key={t.value} value={t.value}>
-                          {t.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                   <div className="space-y-2">
+                     <label className="text-sm font-medium">Typ *</label>
+                     <select
+                       className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm w-full truncate"
+                       value={formData.type}
+                       onChange={(e) =>
+                         setFormData({ ...formData, type: e.target.value })
+                       }
+                       required
+                     >
+                       <option value="">Wybierz</option>
+                       {TYPES.map((t) => (
+                         <option key={t.value} value={t.value}>
+                           {t.label}
+                         </option>
+                       ))}
+                     </select>
+                   </div>
+                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">
