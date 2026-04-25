@@ -108,6 +108,8 @@ npm run dev
 
 Otwórz: http://localhost:5173
 
+Lub odwiedź wersję live: [https://linguashare.vercel.app](https://linguashare.vercel.app)
+
 ---
 
 ## Kontakt
