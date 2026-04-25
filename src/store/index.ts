@@ -26,11 +26,13 @@ interface UserStore {
   login: (email: string, name: string, avatar?: string) => void;
   logout: () => void;
   upgradeToPremium: () => void;
+  updateProfile: (updates: { name?: string; avatar?: string; password?: string; oldPassword?: string }) => boolean;
   
   getDownloadsThisMonth: () => number;
   canDownload: () => boolean;
   recordDownload: (materialId: string) => boolean;
   getAvailableDownloads: () => number;
+  getUserName: () => string;
   
   uploadMaterial: () => void;
   addBonusDownload: () => void;
@@ -142,6 +144,24 @@ export const useUserStore = create<UserStore>()(
             },
           });
         }
+       },
+        
+      updateProfile: (updates) => {
+        const { user } = get();
+        if (!user) return false;
+        if (updates.name !== undefined) {
+          user.name = updates.name;
+        }
+        if (updates.avatar !== undefined) {
+          user.avatar = updates.avatar;
+        }
+        set({ user: { ...user } });
+        return true;
+      },
+      
+      getUserName: () => {
+        const { user } = get();
+        return user?.name || '';
       },
       
       addBonusDownload: () => {
