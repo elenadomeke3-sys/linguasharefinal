@@ -10,13 +10,15 @@ import { X } from "lucide-react";
 import { Input } from "@/components/Input";
 
 const MOCK_MATERIALS = [
-  { id: "1", title: "Ćwiczenia na czas Present Perfect", language: "Angielski", level: "B1", downloads: 45, averageRating: 4.5 },
-  { id: "2", title: "Fiszki - Słówka biznesowe", language: "Angielski", level: "B2", downloads: 128, averageRating: 4.8 },
+  { id: "1", title: "Ćwiczenia: Present Perfect vs Past Simple", language: "Angielski", level: "B1", downloads: 45, averageRating: 4.5 },
+  { id: "2", title: "Fiszki: 100 najważniejszych czasowników nieregularnych", language: "Angielski", level: "A2", downloads: 128, averageRating: 4.8 },
+  { id: "3", title: "Quiz: Czasowniki Phrasal (część 1)", language: "Angielski", level: "B2", downloads: 67, averageRating: 4.3 },
+  { id: "4", title: "Podręcznik: Słownictwo biznesowe - Meetings", language: "Angielski", level: "C1", downloads: 34, averageRating: 4.6 },
 ];
 
 const MOCK_COLLECTIONS = [
-  { id: "1", name: "Gramatyka B1", materialsCount: 12 },
-  { id: "2", name: "Biznesowy angielski", materialsCount: 8 },
+  { id: "1", name: "Gramatyka: Czasowniki Modalne", materialsCount: 12 },
+  { id: "2", name: "Słownictwo: Podróże i Turystyka", materialsCount: 8 },
 ];
 
 export default function DashboardPage() {
@@ -140,7 +142,7 @@ export default function DashboardPage() {
               <CardContent className="p-6">
                 <h2 className="text-2xl font-bold mb-2">Witaj, {user.name.split(" ")[0]}!</h2>
                 <p className="text-white/90 mb-4 font-medium">
-                  {isPremium ? <span>Masz nieograniczony dostęp do wszystkich materiałów Premium! 🎉</span> : <span>Masz {downloadsRemaining} darmowych pobrań w tym miesiącu. Upgrade do Premium dla nieograniczonych pobrań!</span>}
+                  {isPremium ? <span>Masz nieograniczony dostęp do wszystkich materiałów Premium! 🎉</span> : <span>Masz {downloadsRemaining} darmowe pobrania w tym miesiącu. Zaktualizuj do Premium dla nieograniczonych pobrań!</span>}
                 </p>
                 <div className="flex gap-4">
                   <Link to="/materials"><Button variant="secondary">Przeglądaj materiały</Button></Link>
