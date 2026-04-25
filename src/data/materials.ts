@@ -84,3 +84,17 @@ export const materials: Material[] = [
 export function getMaterialById(id: string): Material | undefined {
   return materials.find((m) => m.id === id);
 }
+
+export function updateMaterial(id: string, updates: Partial<Material>): boolean {
+  const index = materials.findIndex((m) => m.id === id);
+  if (index === -1) return false;
+  materials[index] = { ...materials[index], ...updates };
+  return true;
+}
+
+export function deleteMaterial(id: string): boolean {
+  const index = materials.findIndex((m) => m.id === id);
+  if (index === -1) return false;
+  materials.splice(index, 1);
+  return true;
+}

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { Material } from '../data/materials';
 
 interface User {
   id: string;
@@ -26,6 +27,7 @@ interface UserStore {
   login: (email: string, name: string, avatar?: string) => void;
   logout: () => void;
   upgradeToPremium: () => void;
+  cancelPremium: () => void;
   updateProfile: (updates: { name?: string; avatar?: string; password?: string; oldPassword?: string }) => boolean;
   
   getDownloadsThisMonth: () => number;
@@ -36,6 +38,8 @@ interface UserStore {
   
   uploadMaterial: () => void;
   addBonusDownload: () => void;
+  updateMaterial: (materialId: string, updates: Partial<Material>) => boolean;
+  deleteMaterial: (materialId: string) => boolean;
 }
 
 const getCurrentMonthDownloads = (downloads: DownloadRecord[]): number => {
@@ -90,6 +94,19 @@ export const useUserStore = create<UserStore>()(
         }
       },
       
+      cancelPremium: () => {
+        const { user } = get();
+        if (user) {
+          set({
+            user: {
+              ...user,
+              isPremium: false,
+              premiumExpiresAt: undefined,
+            },
+          });
+        }
+      },
+      
       getDownloadsThisMonth: () => {
         return getCurrentMonthDownloads(get().downloads);
       },
@@ -131,6 +148,18 @@ export const useUserStore = create<UserStore>()(
         const available = 3 + user.bonusDownloads;
         
         return Math.max(0, available - monthlyDownloads);
+      },
+      
+      updateMaterial: (materialId, updates) => {
+        // W rzeczywistej aplikacji to wywołałoby API
+        console.log(`Aktualizacja materiału ${materialId}:`, updates);
+        return true;
+      },
+      
+      deleteMaterial: (materialId) => {
+        // W rzeczywistej aplikacji to wywołałoby API
+        console.log(`Usuwanie materiału ${materialId}`);
+        return true;
       },
       
       uploadMaterial: () => {

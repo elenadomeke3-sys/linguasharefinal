@@ -2,16 +2,17 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/Card";
 import { Badge } from "@/components/Badge";
-import { CreditCard, Edit, Download, Upload } from "lucide-react";
+import { CreditCard, Edit, Download, Upload, FileText } from "lucide-react";
 import { useUserStore } from "@/store";
 import ProfileEditor from "@/components/ProfileEditor";
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Input } from "@/components/Input";
+import { materials, updateMaterial, deleteMaterial } from "@/data/materials";
 
 export default function UserProfilePage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout, upgradeToPremium, updateProfile, getAvailableDownloads } = useUserStore();
+  const { user, isAuthenticated, logout, upgradeToPremium, cancelPremium, updateProfile, getAvailableDownloads } = useUserStore();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
@@ -103,6 +104,16 @@ export default function UserProfilePage() {
                       Upgrade Premium
                     </Button>
                   )}
+                  {isPremium && (
+                    <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => {
+                      if (confirm('Czy na pewno chcesz anulować subskrypcję Premium?')) {
+                        cancelPremium();
+                      }
+                    }}>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Anuluj subskrypcję
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -167,6 +178,30 @@ export default function UserProfilePage() {
             </Card>
           </div>
         </div>
+
+        <Card>
+          <CardHeader><CardTitle>Moje materiały</CardTitle><CardDescription>Zarządzaj swoimi dodanymi materiałami</CardDescription></CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {materials.filter(m => m.author.name === user.name).length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nie dodałeś jeszcze żadnych materiałów.</p>
+              ) : (
+                materials.filter(m => m.author.name === user.name).map((m) => (
+                  <div key={m.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-muted flex items-center justify-center rounded"><FileText className="h-6 w-6 text-muted-foreground" /></div>
+                      <div><p className="font-medium">{m.title}</p><p className="text-sm text-muted-foreground">{m.language} • {m.level}</p></div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => { updateMaterial(m.id, { title: m.title + ' [EDYTOWANY]' }); }}>Edytuj</Button>
+                      <Button variant="ghost" size="sm" onClick={() => { if(confirm('Usunąć materiał?')) deleteMaterial(m.id); }}>Usuń</Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         <ProfileEditor isOpen={isEditingProfile} onClose={() => setIsEditingProfile(false)} currentName={user.name} currentAvatar={user.avatar} onSave={handleProfileSave} />
 

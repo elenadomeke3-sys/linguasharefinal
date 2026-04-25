@@ -24,25 +24,28 @@ const LANGUAGES = [
   { value: "angielski", label: "Angielski" },
   { value: "niemiecki", label: "Niemiecki" },
   { value: "francuski", label: "Francuski" },
+  { value: "hiszpanski", label: "Hiszpański" },
+  { value: "włoski", label: "Włoski" },
+  { value: "rosyjski", label: "Rosyjski" },
 ];
 
 const LEVELS = [
   { value: "", label: "Wszystkie poziomy" },
-  { value: "A1", label: "A1" },
-  { value: "A2", label: "A2" },
-  { value: "B1", label: "B1" },
-  { value: "B2", label: "B2" },
-  { value: "C1", label: "C1" },
+  { value: "A1", label: "A1 - Początkujący" },
+  { value: "A2", label: "A2 - Podstawowy" },
+  { value: "B1", label: "B1 - Średniozaawansowany" },
+  { value: "B2", label: "B2 - Średniozaawansowany+" },
+  { value: "C1", label: "C1 - Zaawansowany" },
+  { value: "C2", label: "C2 - Biegły" },
 ];
 
 const TYPES = [
   { value: "", label: "Wszystkie typy" },
-  { value: "TEST", label: "Testy" },
-  { value: "QUIZ", label: "Kartkówki" },
-  { value: "EXAM", label: "Sprawdziany" },
-  { value: "FLASHCARDS", label: "Słówka" },
+  { value: "FLASHCARDS", label: "Słówka / Fiszki" },
   { value: "WORKSHEET", label: "Ćwiczenia" },
+  { value: "TEST", label: "Testy" },
   { value: "LESSON_PLAN", label: "Scenariusze lekcji" },
+  { value: "EXAM", label: "Sprawdziany" },
   { value: "PRESENTATION", label: "Prezentacje" },
 ];
 
@@ -261,6 +264,7 @@ export default function MaterialsPage() {
   const type = searchParams.get("type") || "";
   const sort = searchParams.get("sort") || "newest";
   const page = parseInt(searchParams.get("page") || "1");
+  const [premiumOnly, setPremiumOnly] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -280,14 +284,17 @@ export default function MaterialsPage() {
       if (level) {
         filtered = filtered.filter((m) => m.level === level);
       }
-      if (type) {
-        filtered = filtered.filter((m) => m.type === type);
-      }
+       if (type) {
+         filtered = filtered.filter((m) => m.type === type);
+       }
+       if (premiumOnly) {
+         filtered = filtered.filter((m) => m.isPremium);
+       }
 
-      setMaterials(filtered);
+       setMaterials(filtered);
       setIsLoading(false);
     }, 500);
-  }, [search, language, level, type, sort, page]);
+  }, [search, language, level, type, premiumOnly, sort, page]);
 
   const updateParams = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -343,7 +350,19 @@ export default function MaterialsPage() {
                 {t.label}
               </option>
             ))}
-          </select>
+           </select>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="premium-only"
+              checked={premiumOnly}
+              onChange={(e) => setPremiumOnly(e.target.checked)}
+              className="rounded"
+            />
+            <label htmlFor="premium-only" className="text-sm">
+              Tylko Premium
+            </label>
+          </div>
         </div>
 
         <div className="flex items-center justify-between">
