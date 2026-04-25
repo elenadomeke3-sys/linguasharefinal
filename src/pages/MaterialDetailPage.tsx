@@ -66,6 +66,12 @@ export default function MaterialDetailPage() {
   const [comment, setComment] = useState("");
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
+  function formatDownloads(count: number): string {
+    if (count === 1) return "1 pobranie";
+    if (count >= 2 && count <= 4) return `${count} pobrania`;
+    return `${count} pobrań`;
+  }
+
   useEffect(() => {
     setIsLoading(true);
     setTimeout(() => {
@@ -85,12 +91,12 @@ export default function MaterialDetailPage() {
       return;
     }
     
-    const canDownloadResult = recordDownload(id || "");
-    if (!canDownloadResult) {
-      const available = getAvailableDownloads();
-      setDownloadError(`Osiągnąłeś limit pobrań. Dostępne pobrania: ${available}. Zaktualizuj do Premium!`);
-      return;
-    }
+      const canDownloadResult = recordDownload(id || "");
+      if (!canDownloadResult) {
+        const available = getAvailableDownloads();
+        setDownloadError(`Osiągnąłeś limit pobrań. Dostępne ${formatDownloads(available)}. Zaktualizuj do Premium!`);
+        return;
+      }
     
     setDownloadError(null);
     alert("Pobieranie materiału...");
@@ -292,10 +298,10 @@ export default function MaterialDetailPage() {
             <CardContent className="space-y-4">
               {isAuthenticated && !user?.isPremium && (
                 <div className="text-sm text-muted-foreground text-center py-2 bg-muted/50 rounded">
-                  Pozostało {getAvailableDownloads()} pobrań w tym miesiącu
+                  Pozostało {formatDownloads(getAvailableDownloads())} w tym miesiącu
                 </div>
               )}
-              
+
               {downloadError && (
                 <div className="text-sm text-red-500 text-center py-2 bg-red-50 rounded">
                   {downloadError}

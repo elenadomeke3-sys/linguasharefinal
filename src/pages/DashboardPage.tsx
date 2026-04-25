@@ -21,6 +21,12 @@ const MOCK_COLLECTIONS = [
   { id: "2", name: "Słownictwo: Podróże i Turystyka", materialsCount: 8 },
 ];
 
+function formatDownloads(count: number): string {
+  if (count === 1) return "1 pobranie";
+  if (count >= 2 && count <= 4) return `${count} pobrania`;
+  return `${count} pobrań`;
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout, getAvailableDownloads, upgradeToPremium, updateProfile } = useUserStore();
@@ -142,7 +148,7 @@ export default function DashboardPage() {
               <CardContent className="p-6">
                 <h2 className="text-2xl font-bold mb-2">Witaj, {user.name.split(" ")[0]}!</h2>
                 <p className="text-white/90 mb-4 font-medium">
-                  {isPremium ? <span>Masz nieograniczony dostęp do wszystkich materiałów Premium! 🎉</span> : <span>Masz {downloadsRemaining} darmowe pobrania w tym miesiącu. Zaktualizuj do Premium dla nieograniczonych pobrań!</span>}
+                  {isPremium ? <span>Masz nieograniczony dostęp do wszystkich materiałów Premium! 🎉</span> : <span>Masz {formatDownloads(downloadsRemaining)} w tym miesiącu. Zaktualizuj do Premium dla nieograniczonych pobrań!</span>}
                 </p>
                 <div className="flex gap-4">
                   <Link to="/materials"><Button variant="secondary">Przeglądaj materiały</Button></Link>
