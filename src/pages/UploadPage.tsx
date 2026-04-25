@@ -17,6 +17,8 @@ const LANGUAGES = [
   { value: "niemiecki", label: "Niemiecki" },
   { value: "francuski", label: "Francuski" },
   { value: "hiszpanski", label: "Hiszpański" },
+  { value: "włoski", label: "Włoski" },
+  { value: "rosyjski", label: "Rosyjski" },
 ];
 
 const LEVELS = [
@@ -25,13 +27,16 @@ const LEVELS = [
   { value: "B1", label: "B1 - Średniozaawansowany" },
   { value: "B2", label: "B2 - Średniozaawansowany+" },
   { value: "C1", label: "C1 - Zaawansowany" },
+  { value: "C2", label: "C2 - Biegły" },
 ];
 
 const TYPES = [
-  { value: "WORKSHEET", label: "Arkusz ćwiczeń" },
-  { value: "FLASHCARDS", label: "Fiszki" },
-  { value: "LESSON_PLAN", label: "Scenariusz lekcji" },
-  { value: "TEST", label: "Test" },
+  { value: "FLASHCARDS", label: "Słówka / Fiszki" },
+  { value: "WORKSHEET", label: "Ćwiczenia" },
+  { value: "TEST", label: "Testy" },
+  { value: "LESSON_PLAN", label: "Scenariusze lekcji" },
+  { value: "EXAM", label: "Sprawdziany" },
+  { value: "PRESENTATION", label: "Prezentacje" },
 ];
 
 const LEVEL_PATTERNS: Record<string, string> = {
@@ -52,8 +57,13 @@ const TYPE_PATTERNS: Record<string, string> = {
   fiszki: "FLASHCARDS",
   "lesson plan": "LESSON_PLAN",
   scenariusz: "LESSON_PLAN",
+  lekcja: "LESSON_PLAN",
   test: "TEST",
   quiz: "TEST",
+  sprawdzian: "EXAM",
+  egzamin: "EXAM",
+  prezentacja: "PRESENTATION",
+  slajdy: "PRESENTATION",
 };
 
 function autoDetectTags(title: string): { level: string; type: string; confidence: number } {
