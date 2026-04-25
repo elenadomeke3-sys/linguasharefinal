@@ -41,12 +41,12 @@ export default function AuthPage() {
   };
 
   const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!registerData.name || !registerData.email || !registerData.password) return;
-    setIsLoading(true);
-    storeLogin(registerData.email, registerData.name, registerData.avatar || undefined);
-    setTimeout(() => navigate("/dashboard"), 1000);
-  };
+     e.preventDefault();
+     if (!registerData.name || !registerData.email || !registerData.password) return;
+     setIsLoading(true);
+     storeLogin(registerData.email, registerData.name, registerData.avatar);
+     setTimeout(() => navigate("/dashboard"), 1000);
+   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

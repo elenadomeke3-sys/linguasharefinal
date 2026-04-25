@@ -59,7 +59,7 @@ const typeLabels: Record<string, string> = {
 export default function MaterialDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated, canDownload, recordDownload, getAvailableDownloads, isPremium } = useUserStore();
+  const { user, isAuthenticated, recordDownload, getAvailableDownloads } = useUserStore();
   const [material, setMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userRating, setUserRating] = useState(0);

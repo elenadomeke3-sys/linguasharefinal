@@ -23,7 +23,7 @@ interface UserStore {
   downloads: DownloadRecord[];
   isAuthenticated: boolean;
   
-  login: (email: string, name: string) => void;
+  login: (email: string, name: string, avatar?: string) => void;
   logout: () => void;
   upgradeToPremium: () => void;
   

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/Card";
 import { Upload, FileText, X, CheckCircle2, Sparkles, Loader2 } from "lucide-react";
-import { useUserStore } from "@/store";
 
 const LANGUAGES = [
   { value: "angielski", label: "Angielski" },
@@ -88,7 +87,6 @@ function autoDetectTags(title: string): { level: string; type: string; confidenc
 
 export default function UploadPage() {
   const navigate = useNavigate();
-  const { uploadMaterial } = useUserStore();
   const [isLoading, setIsLoading] = useState(false);
   const [isAutoTagging, setIsAutoTagging] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<{
@@ -96,11 +94,6 @@ export default function UploadPage() {
     size: number;
   } | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [autoTagSuggestions, setAutoTagSuggestions] = useState<{
-    level: string;
-    type: string;
-    confidence: number;
-  } | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -279,10 +272,9 @@ export default function UploadPage() {
                             alert("Najpierw wpisz tytuł materiału");
                             return;
                           }
-                          setIsAutoTagging(true);
+                           setIsAutoTagging(true);
                           setTimeout(() => {
                             const tags = autoDetectTags(formData.title);
-                            setAutoTagSuggestions(tags);
                             if (tags.level) {
                               setFormData(prev => ({ ...prev, level: tags.level }));
                             }
