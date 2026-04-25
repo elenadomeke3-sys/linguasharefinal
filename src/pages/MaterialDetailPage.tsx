@@ -67,8 +67,22 @@ export default function MaterialDetailPage() {
       return;
     }
     
+    // Generowanie i pobieranie pliku
+    const content = material?.content || material?.description || "Brak treści";
+    const fileName = `${material?.title.toLowerCase().replace(/\s+/g, '-')}.txt`;
+    const fileContent = `# ${material?.title}\n\n**Autor:** ${material?.author.name}\n**Język:** ${material?.language}\n**Poziom:** ${material?.level}\n**Typ:** ${material?.type}\n**Data:** ${material?.createdAt}\n\n--\n\n${content}\n\n--\n\n*Pobrano z LinguaShare*`;
+    
+    const blob = new Blob([fileContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
     setDownloadError(null);
-    alert("Pobieranie materiału...");
   };
 
   if (isLoading) {
@@ -131,38 +145,22 @@ export default function MaterialDetailPage() {
                 {material.description}
               </p>
 
-              {/* Preview */}
+              {/* Podgląd zawartości */}
               <div className="mb-6">
-                <p className="text-sm font-medium mb-2">Podgląd materiału</p>
-                <div className="relative h-64 bg-muted rounded-lg overflow-hidden border">
-                  <div className="absolute inset-0 backdrop-blur-sm bg-white/60" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center p-6">
-                      <FileText className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-                      <p className="text-sm text-muted-foreground/70 font-medium">
-                        Podgląd dostępny po pobraniu
-                      </p>
-                      <p className="text-xs text-muted-foreground/50 mt-1">
-                        Pobierz materiał aby zobaczyć pełną wersję
-                      </p>
-                    </div>
+                <p className="text-sm font-medium mb-2">Treść materiału</p>
+                <div className="relative h-64 bg-muted rounded-lg overflow-hidden border p-4">
+                  <div className="overflow-y-auto h-full text-sm text-muted-foreground">
+                    {material.content || material.description}
                   </div>
-                  <div className="absolute inset-0 flex items-center justify-center p-8">
-                    <div className="blur-[2px] opacity-40 select-none pointer-events-none">
-                      <div className="text-xs space-y-2 text-muted-foreground">
-                        <div className="h-2 w-full bg-gray-300 rounded" />
-                        <div className="h-2 w-4/5 bg-gray-300 rounded" />
-                        <div className="h-2 w-3/5 bg-gray-300 rounded" />
-                        <div className="h-2 w-full bg-gray-300 rounded" />
-                        <div className="h-2 w-2/3 bg-gray-300 rounded" />
-                        <div className="h-2 w-4/5 bg-gray-300 rounded" />
-                        <div className="h-2 w-full bg-gray-300 rounded" />
-                        <div className="h-2 w-3/4 bg-gray-300 rounded" />
-                      </div>
-                    </div>
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-muted/80 via-muted/20 to-transparent pointer-events-none" />
                 </div>
               </div>
+
+              {/* Przycisk pobierania */}
+              <Button className="w-full mb-4" onClick={handleDownload}>
+                <Download className="h-4 w-4 mr-2" />
+                Pobierz jako PDF/TXT
+              </Button>
 
               <div className="flex flex-wrap gap-2 mb-6">
                 {material.tags.map((tag: string) => (

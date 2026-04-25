@@ -130,7 +130,6 @@ export default function UploadPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (
-      !uploadedFile ||
       !formData.title ||
       !formData.language ||
       !formData.level ||
@@ -155,9 +154,11 @@ export default function UploadPage() {
         isPremium: formData.isPremium,
         downloads: 0,
         createdAt: now,
-        author: { name: "Użytkownik" }, // W rzeczywistej aplikacji pobierane zalogowanego usera
+        author: { name: "Użytkownik" },
         averageRating: 0,
         totalRatings: 0,
+        // Zawartość materiału - domyślny tekst
+        content: formData.description || "To jest przykładowa zawartość materiału. W rzeczywistej aplikacji znajdowałby się tu pełny dokument, ćwiczenia lub prezentacja do pobrania.",
       };
 
       // Dodajemy do bazy materiałów
