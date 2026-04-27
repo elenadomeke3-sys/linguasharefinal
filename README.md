@@ -1,6 +1,6 @@
 # LinguaShare — Platforma dla korepetytorów językowych
 
-**Autor:** Elena Ewanguelopulu  
+**Autor:** Elena Ewangelopulu  
 **Data utworzenia:** 16 marca 2026  
 **Status:** MVP gotowe do uruchomienia
 
