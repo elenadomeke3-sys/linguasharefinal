@@ -202,9 +202,15 @@ export default function MaterialDetailPage() {
   };
 
   const handleOpenEdit = () => {
-    console.log('Edit button clicked', { materialId: material?.id, authorId: material?.author_id, userId: user?.id });
+    console.log('✅ [DEBUG] Edit button clicked!', {
+      materialId: material?.id,
+      authorId: material?.author_id,
+      userId: user?.id,
+      canEdit: user?.id === material?.author_id,
+      currentState: isEditingMaterial,
+    });
     if (!material) {
-      console.warn('No material, cannot edit');
+      console.warn('⚠️ [DEBUG] No material, cannot edit');
       return;
     }
     setEditForm({
@@ -217,7 +223,7 @@ export default function MaterialDetailPage() {
       isPremium: material.is_premium,
     });
     setIsEditingMaterial(true);
-    console.log('Modal state set to true');
+    console.log('✅ [DEBUG] setIsEditingMaterial(true) called');
   };
 
   const handleCloseEdit = () => {
@@ -716,9 +722,31 @@ export default function MaterialDetailPage() {
         </div>
       </div>
 
+      {/* DEBUG OVERLAY - jeśli to widzisz, modal powinien się pojawić */}
+      {isEditingMaterial && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(255,0,0,0.7)',
+          zIndex: 999999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontSize: '2rem',
+          fontWeight: 'bold',
+          pointerEvents: 'none',
+        }}>
+          DEBUG: MODAL ACTIVE
+        </div>
+      )}
+
       {/* Edit Material Modal */}
       {isEditingMaterial && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000000] p-4">
           <div className="bg-background rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold">Edytuj materiał</h3>
