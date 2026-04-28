@@ -5,7 +5,6 @@ import HomePage from "./pages/HomePage";
 import MaterialsPage from "./pages/MaterialsPage";
 import MaterialDetailPage from "./pages/MaterialDetailPage";
 import AuthPage from "./pages/AuthPage";
-import DashboardPage from "./pages/DashboardPage";
 import UploadPage from "./pages/UploadPage";
 import PricingPage from "./pages/PricingPage";
 import AboutPage from "./pages/AboutPage";
@@ -35,9 +34,9 @@ function App() {
         
         {/* Widoki chronione przed niezalogowanymi gośćmi */}
         <Route element={<ProtectedRoute />}>
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="dashboard/upload" element={<UploadPage />} />
           <Route path="profile" element={<UserProfilePage />} />
+          <Route path="dashboard" element={<UserProfilePage />} /> {/* alias = profile */}
+          <Route path="dashboard/upload" element={<UploadPage />} />
         </Route>
 
         <Route path="pricing" element={<PricingPage />} />

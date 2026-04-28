@@ -3,10 +3,17 @@
 UPDATE public.materials m
 SET author_id = u.id
 FROM auth.users u
-WHERE m.author_name = u.user_metadata->>'full_name'
+WHERE m.author_name = u.raw_user_meta_data->>'full_name'
   AND m.author_id IS NULL;
 
--- Alternatively, if you want to set a default author for materials without matching name:
+-- If above doesn't match (case differences), try case-insensitive:
+-- UPDATE public.materials m
+-- SET author_id = u.id
+-- FROM auth.users u
+-- WHERE LOWER(m.author_name) = LOWER(u.raw_user_meta_data->>'full_name')
+--   AND m.author_id IS NULL;
+
+-- If still no matches, you may need to manually assign or use a fallback:
 -- UPDATE public.materials
--- SET author_id = 'some-user-id-here'
+-- SET author_id = 'TODO-INSERT-USER-ID-HERE'
 -- WHERE author_id IS NULL;

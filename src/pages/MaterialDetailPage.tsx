@@ -202,7 +202,11 @@ export default function MaterialDetailPage() {
   };
 
   const handleOpenEdit = () => {
-    if (!material) return;
+    console.log('Edit button clicked', { materialId: material?.id, authorId: material?.author_id, userId: user?.id });
+    if (!material) {
+      console.warn('No material, cannot edit');
+      return;
+    }
     setEditForm({
       title: material.title,
       description: material.description || "",
@@ -213,6 +217,7 @@ export default function MaterialDetailPage() {
       isPremium: material.is_premium,
     });
     setIsEditingMaterial(true);
+    console.log('Modal state set to true');
   };
 
   const handleCloseEdit = () => {
@@ -713,7 +718,7 @@ export default function MaterialDetailPage() {
 
       {/* Edit Material Modal */}
       {isEditingMaterial && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
           <div className="bg-background rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold">Edytuj materiał</h3>
