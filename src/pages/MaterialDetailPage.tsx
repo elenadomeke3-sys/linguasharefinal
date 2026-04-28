@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useUserStore } from "@/store";
-import { materials, getMaterialById } from "@/data/materials";
 import { Material } from "@/data/materials";
 import { supabase } from "@/lib/supabase";
 
@@ -32,7 +31,6 @@ export default function MaterialDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { getAvailableDownloads } = useUserStore();
-  const [material, setMaterial] = useState(materials[0]);
   const [material, setMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userRating, setUserRating] = useState(0);
@@ -46,55 +44,69 @@ export default function MaterialDetailPage() {
   }
 
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const foundMaterial = getMaterialById(id || "");
-      setMaterial(foundMaterial || materials[0]);
     const fetchMaterial = async () => {
       setIsLoading(true);
-      const { data } = await supabase.from('materials').select('*').eq('id', id).single();
-      if (data) setMaterial(data);
+      if (!id) {
+        setMaterial(null);
+        setIsLoading(false);
+        return;
+      }
+
+      const { data } = await supabase
+        .from('materials')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (data) {
+        const normalizedMaterial: Material = {
+          id: data.id,
+          title: data.title,
+          description: data.description || "",
+          language: data.language,
+          level: data.level,
+          type: data.type,
+          tags: data.tags || [],
+          content: data.content,
+          author_name: data.author_name || "Nieznany",
+          downloads: data.downloads || 0,
+          average_rating: data.average_rating || 0,
+          total_ratings: data.total_ratings || 0,
+          is_premium: data.is_premium || false,
+          file_url: data.file_url || null,
+          created_at: data.created_at,
+        };
+        setMaterial(normalizedMaterial);
+      } else {
+        setMaterial(null);
+      }
       setIsLoading(false);
-    }, 300);
     };
-    if (id) fetchMaterial();
+
+    fetchMaterial();
   }, [id]);
 
-   const handleDownload = () => {
-     if (!user) {
-       setDownloadError("Zaloguj się, aby pobierać materiały");
-       return;
-     }
-     
-     const isPremiumUser = user?.user_metadata?.is_premium || false;
-     if (material?.isPremium && !isPremiumUser) {
-     if (material?.is_premium && !isPremiumUser) {
+  const handleDownload = () => {
+    if (!user) {
+      setDownloadError("Zaloguj się, aby pobierać materiały");
+      return;
+    }
+
+    const isPremiumUser = user?.user_metadata?.is_premium || false;
+    if (!material) return;
+
+    if (material.is_premium && !isPremiumUser) {
       setDownloadError("Ten materiał jest dostępny tylko dla subskrybentów Premium");
       return;
-      }
-      
-    // Generowanie i pobieranie pliku
-    const content = material?.content || material?.description || "Brak treści";
-    const fileName = `${material?.title.toLowerCase().replace(/\s+/g, '-')}.txt`;
-    const fileContent = `# ${material?.title}\n\n**Autor:** ${material?.author.name}\n**Język:** ${material?.language}\n**Poziom:** ${material?.level}\n**Typ:** ${material?.type}\n**Data:** ${material?.createdAt}\n\n--\n\n${content}\n\n--\n\n*Pobrano z LinguaShare*`;
-    
-    const blob = new Blob([fileContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    setDownloadError(null);
-    if (material?.file_url) {
-      window.open(material.file_url, '_blank');
-      setDownloadError(null);
-    } else {
-      setDownloadError("Plik jest niedostępny.");
     }
+
+    if (!material.file_url) {
+      setDownloadError("Plik jest niedostępny.");
+      return;
+    }
+
+    window.open(material.file_url, '_blank');
+    setDownloadError(null);
   };
 
   if (isLoading) {
@@ -122,6 +134,13 @@ export default function MaterialDetailPage() {
     );
   }
 
+  const displayAuthorName = material.author_name || "Nieznany";
+  const displayAverageRating = material.average_rating ?? 0;
+  const displayTotalRatings = material.total_ratings ?? 0;
+  const displayDownloads = material.downloads ?? 0;
+  const displayCreatedAt = material.created_at ? new Date(material.created_at).toLocaleDateString() : "-";
+  const isPremium = material.is_premium;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
@@ -143,8 +162,7 @@ export default function MaterialDetailPage() {
                     <Badge variant="outline">{material.language}</Badge>
                     <Badge variant="secondary">{material.level}</Badge>
                     <Badge variant="outline">{typeLabels[material.type]}</Badge>
-                    {material.isPremium && (
-                {material.is_premium && (
+                    {isPremium && (
                       <Badge className="bg-gradient-to-r from-primary to-purple-600">
                         Premium
                       </Badge>
@@ -187,28 +205,23 @@ export default function MaterialDetailPage() {
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">
-                      {material.averageRating}
-                  {material.average_rating}
-                    </span>
+                    <span className="font-medium">{displayAverageRating}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {material.totalRatings} ocen
-                {material.total_ratings} ocen
+                    {displayTotalRatings} ocen
                   </p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <Download className="h-4 w-4" />
-                    <span className="font-medium">{material.downloads}</span>
+                    <span className="font-medium">{displayDownloads}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">pobrań</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <Clock className="h-4 w-4" />
-                    <span className="font-medium">{material.createdAt}</span>
-                <span className="font-medium">{new Date(material.created_at).toLocaleDateString()}</span>
+                    <span className="font-medium">{displayCreatedAt}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">dodano</p>
                 </div>
@@ -231,12 +244,10 @@ export default function MaterialDetailPage() {
             <CardContent>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="font-medium">{material.author.name[0]}</span>
-              <span className="font-medium">{material.author_name[0]}</span>
+                  {displayAuthorName ? displayAuthorName[0] : "?"}
                 </div>
                 <div>
-                  <p className="font-medium">{material.author.name}</p>
-              <p className="font-medium">{material.author_name}</p>
+                  <p className="font-medium">{displayAuthorName}</p>
                   <p className="text-sm text-muted-foreground">
                     Twórca materiału
                   </p>
@@ -284,19 +295,18 @@ export default function MaterialDetailPage() {
               {user && !(user.user_metadata?.is_premium) && (
                 <div className="text-sm text-muted-foreground text-center py-2 bg-muted/50 rounded">
                   Pozostało {formatDownloads(getAvailableDownloads())} w tym miesiącu
-              Pozostało {formatDownloads(3)} w tym miesiącu
                 </div>
               )}
-              
+
               {downloadError && (
                 <div className="text-sm text-red-500 text-center py-2 bg-red-50 rounded">
                   {downloadError}
                 </div>
               )}
-              
-               {material?.isPremium && !(user?.user_metadata?.is_premium) ? (
-                <Button 
-                  className="w-full" 
+
+              {isPremium && !(user?.user_metadata?.is_premium) ? (
+                <Button
+                  className="w-full"
                   variant="secondary"
                   onClick={() => navigate("/pricing")}
                 >
@@ -309,7 +319,7 @@ export default function MaterialDetailPage() {
                   Pobierz materiał
                 </Button>
               )}
-              
+
               <p className="text-xs text-center text-muted-foreground">
                 Format: PDF, DOCX
               </p>
