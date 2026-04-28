@@ -3,8 +3,8 @@
 ## Upload Materiałów
 - status: DONE
 - plan: PLAN_upload_material.md
-- opis: Użytkownik może wgrać plik z zasobami dydaktycznymi, podać tytuł, język, poziom i typ. Obejmuje symulację Auto-Taggingu na podstawie tytułu pliku oraz mock dodawania do bazy danych. Zrealizowano w `src/pages/UploadPage.tsx`.
-- **UWAGA:** Wymaga konfiguracji bucketu `materials` w Supabase Storage (patrz README).
+- opis: Użytkownik może wgrać plik z zasobami dydaktycznymi, podać tytuł, język, poziom i typ. Pliki są przechowywane w Supabase Storage `materials` (bucket publiczny), a metadane zapisywane w tabeli `public.materials` z politykami RLS. Zrealizowano w `src/pages/UploadPage.tsx`.
+- Wymagania: Tabela `materials` + bucket `materials` + RLS policies (patrz README)
 
 ## Autoryzacja Supabase
 - status: DONE
@@ -19,7 +19,7 @@
 ## Pobieranie danych z Supabase (Fetch)
 - status: DONE
 - plan: PLAN_supabase_fetch.md
-- opis: Usunięcie statycznych tablic mockowych. Integracja katalogu materiałów (`MaterialsPage.tsx`) z zapytaniami do bazy Supabase wraz z filtrowaniem. Zrealizowano dynamiczne statystyki w panelach.
+- opis: Usunięcie statycznych tablic mockowych. Integracja katalogu materiałów (`MaterialsPage.tsx`) z zapytaniami do bazy Supabase wraz z filtrowaniem. Zrealizowano dynamiczne statystyki w panelach. Wymaga tabeli `materials` w bazie.
 
 ## Resetowanie hasła
 - status: DONE
