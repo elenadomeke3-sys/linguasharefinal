@@ -11,7 +11,8 @@ import {
   CardTitle,
 } from "@/components/Card";
 import { Upload, FileText, X, CheckCircle2, Loader2 } from "lucide-react";
-import { materials } from "@/data/materials";
+import { useAuthStore } from "@/store/authStore";
+import { supabase } from "@/lib/supabase";
 
 const LANGUAGES = [
   { value: "angielski", label: "Angielski" },
@@ -102,12 +103,14 @@ function autoDetectTags(title: string): { level: string; type: string; confidenc
 
 export default function UploadPage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [isAutoTagging, setIsAutoTagging] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<{
     name: string;
     size: number;
   } | null>(null);
+  const [actualFile, setActualFile] = useState<File | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -124,10 +127,11 @@ export default function UploadPage() {
     const file = e.target.files?.[0];
     if (file) {
       setUploadedFile({ name: file.name, size: file.size });
+      setActualFile(file);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
       !formData.title ||
@@ -140,34 +144,46 @@ export default function UploadPage() {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      // Tworzymy nowy materiał
-      const now = new Date().toISOString().split('T')[0];
-      const newMaterial = {
-        id: generateId(),
+    
+    try {
+      let fileUrl = "";
+      
+      if (actualFile) {
+        const fileExt = actualFile.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('materials')
+          .upload(fileName, actualFile);
+          
+        if (uploadError) throw new Error("Błąd podczas wgrywania pliku: " + uploadError.message);
+        
+        const { data: { publicUrl } } = supabase.storage.from('materials').getPublicUrl(fileName);
+        fileUrl = publicUrl;
+      }
+
+      const { error: dbError } = await supabase.from('materials').insert({
         title: formData.title,
         description: formData.description || "Brak opisu",
         language: formData.language,
         level: formData.level,
         type: formData.type,
         tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()) : [],
-        isPremium: formData.isPremium,
-        downloads: 0,
-        createdAt: now,
-        author: { name: "Użytkownik" },
-        averageRating: 0,
-        totalRatings: 0,
-        // Zawartość materiału - domyślny tekst
-        content: formData.description || "To jest przykładowa zawartość materiału. W rzeczywistej aplikacji znajdowałby się tu pełny dokument, ćwiczenia lub prezentacja do pobrania.",
-      };
+        is_premium: formData.isPremium,
+        file_url: fileUrl,
+        author_id: user?.id,
+        author_name: user?.user_metadata?.full_name || "Użytkownik"
+      });
 
-      // Dodajemy do bazy materiałów
-      materials.push(newMaterial);
+      if (dbError) throw new Error("Błąd zapisu do bazy: " + dbError.message);
 
       setIsLoading(false);
       setIsSuccess(true);
       setTimeout(() => navigate("/materials"), 2000);
-    }, 1500);
+    } catch (error: any) {
+      setIsLoading(false);
+      alert(error.message);
+    }
   };
 
   if (isSuccess) {
@@ -238,7 +254,10 @@ export default function UploadPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() => setUploadedFile(null)}
+                  onClick={() => {
+                    setUploadedFile(null);
+                    setActualFile(null);
+                  }}
                     >
                       <X className="h-4 w-4" />
                     </Button>

@@ -10,11 +10,12 @@ import {
   CardTitle,
 } from "@/components/Card";
 import { Loader2, User, Camera } from "lucide-react";
-import { useUserStore } from "@/store";
+import { useAuthStore } from "@/store/authStore";
+import { supabase } from "@/lib/supabase";
 
 export default function AuthPage() {
   const navigate = useNavigate();
-  const { login: storeLogin, isAuthenticated } = useUserStore();
+  const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -27,26 +28,54 @@ export default function AuthPage() {
     avatar: "",
   });
 
-  if (isAuthenticated) {
+  if (user) {
     navigate("/dashboard");
     return null;
   }
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginData.email || !loginData.password) return;
     setIsLoading(true);
-    storeLogin(loginData.email, loginData.email.split("@")[0]);
-    setTimeout(() => navigate("/dashboard"), 1000);
+    
+    const { error } = await supabase.auth.signInWithPassword({
+      email: loginData.email,
+      password: loginData.password,
+    });
+    
+    setIsLoading(false);
+    
+    if (error) {
+      alert("Błąd logowania: Nieprawidłowy e-mail lub hasło.");
+    } else {
+      navigate("/dashboard");
+    }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
-     e.preventDefault();
-     if (!registerData.name || !registerData.email || !registerData.password) return;
-     setIsLoading(true);
-     storeLogin(registerData.email, registerData.name, registerData.avatar);
-     setTimeout(() => navigate("/dashboard"), 1000);
-   };
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!registerData.name || !registerData.email || !registerData.password) return;
+    setIsLoading(true);
+    
+    const { error } = await supabase.auth.signUp({
+      email: registerData.email,
+      password: registerData.password,
+      options: {
+        data: {
+          full_name: registerData.name,
+          avatar_url: registerData.avatar,
+        }
+      }
+    });
+    
+    setIsLoading(false);
+    
+    if (error) {
+      alert("Błąd rejestracji: " + error.message);
+    } else {
+      navigate("/dashboard");
+    }
+  };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

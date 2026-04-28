@@ -3,7 +3,8 @@ import { Button } from "@/components/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { CreditCard, Edit, Download, Upload, FileText } from "lucide-react";
-import { useUserStore } from "@/store";
+import { useAuthStore } from "@/store/authStore";
+import { supabase } from "@/lib/supabase";
 import ProfileEditor from "@/components/ProfileEditor";
 import { useState } from "react";
 import { X } from "lucide-react";
@@ -12,14 +13,14 @@ import { materials, updateMaterial, deleteMaterial } from "@/data/materials";
 
 export default function UserProfilePage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout, upgradeToPremium, cancelPremium, updateProfile, getAvailableDownloads } = useUserStore();
+  const { user, signOut } = useAuthStore();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [changePasswordStatus, setChangePasswordStatus] = useState("");
 
-  if (!isAuthenticated || !user) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
         <Card className="max-w-md w-full">
@@ -33,17 +34,27 @@ export default function UserProfilePage() {
     );
   }
 
-  const isPremium = user.isPremium;
-  const downloadsRemaining = getAvailableDownloads();
+  const userName = user.user_metadata?.full_name || "Użytkownik";
+  const userAvatar = user.user_metadata?.avatar_url || "";
+  const userEmail = user.email || "";
+  const isPremium = user.user_metadata?.is_premium || false;
+  const downloadsRemaining = 3; // Mock w wersji MVP
+  const materialsUploaded = materials.filter(m => m.author.name === userName).length;
+  const userCredits = 0; // Mock w wersji MVP
 
-  const handleProfileSave = (name: string, avatar: string) => {
-    updateProfile({ name, avatar });
+  const upgradeToPremium = () => alert("Integracja płatności Stripe pojawi się wkrótce!");
+  const cancelPremium = () => alert("Integracja płatności Stripe pojawi się wkrótce!");
+
+  const handleProfileSave = async (name: string, avatar: string) => {
+    await supabase.auth.updateUser({
+      data: { full_name: name, avatar_url: avatar }
+    });
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     setChangePasswordStatus("");
-    const success = updateProfile({ password: newPassword, oldPassword });
-    if (success) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (!error) {
       setChangePasswordStatus("success");
       setOldPassword("");
       setNewPassword("");
@@ -53,8 +64,8 @@ export default function UserProfilePage() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate("/");
   };
 
@@ -74,15 +85,15 @@ export default function UserProfilePage() {
               <CardContent className="p-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                    {user.avatar ? (
-                      <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                    {userAvatar ? (
+                      <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-xl font-medium text-primary">{user.name[0]}</span>
+                      <span className="text-xl font-medium text-primary">{userName[0]}</span>
                     )}
                   </div>
                   <div>
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <p className="font-medium">{userName}</p>
+                    <p className="text-sm text-muted-foreground">{userEmail}</p>
                   </div>
                 </div>
                 <div className="space-y-3">
@@ -144,17 +155,17 @@ export default function UserProfilePage() {
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground mb-2">Informacje podstawowe</h3>
                     <div className="space-y-3">
-                      <div><span className="text-muted-foreground">Imię i nazwisko:</span> <span className="font-medium">{user.name}</span></div>
-                      <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{user.email}</span></div>
+                      <div><span className="text-muted-foreground">Imię i nazwisko:</span> <span className="font-medium">{userName}</span></div>
+                      <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{userEmail}</span></div>
                       <div><span className="text-muted-foreground">Status:</span> <Badge variant={isPremium ? "default" : "outline"}>{isPremium ? "Premium" : "Darmowy"}</Badge></div>
                     </div>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground mb-2">Statystyki</h3>
                     <div className="space-y-3">
-                      <div><span className="text-muted-foreground">Dodane materiały:</span> <span className="font-medium">{user.materialsUploaded}</span></div>
+                      <div><span className="text-muted-foreground">Dodane materiały:</span> <span className="font-medium">{materialsUploaded}</span></div>
                       <div><span className="text-muted-foreground">Pobrania w tym miesiącu:</span> <span className="font-medium">{formatDownloads(downloadsRemaining)}</span></div>
-                      <div><span className="text-muted-foreground">Zebrane bonusy:</span> <span className="font-medium">{user.credits + user.bonusDownloads}</span></div>
+                      <div><span className="text-muted-foreground">Zebrane bonusy:</span> <span className="font-medium">{userCredits}</span></div>
                     </div>
                   </div>
                 </div>
@@ -183,10 +194,10 @@ export default function UserProfilePage() {
           <CardHeader><CardTitle>Moje materiały</CardTitle><CardDescription>Zarządzaj swoimi dodanymi materiałami</CardDescription></CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {materials.filter(m => m.author.name === user.name).length === 0 ? (
+              {materials.filter(m => m.author.name === userName).length === 0 ? (
                 <p className="text-sm text-muted-foreground">Nie dodałeś jeszcze żadnych materiałów.</p>
               ) : (
-                materials.filter(m => m.author.name === user.name).map((m) => (
+                materials.filter(m => m.author.name === userName).map((m) => (
                   <div key={m.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-muted flex items-center justify-center rounded"><FileText className="h-6 w-6 text-muted-foreground" /></div>
@@ -203,7 +214,7 @@ export default function UserProfilePage() {
           </CardContent>
         </Card>
 
-        <ProfileEditor isOpen={isEditingProfile} onClose={() => setIsEditingProfile(false)} currentName={user.name} currentAvatar={user.avatar} onSave={handleProfileSave} />
+        <ProfileEditor isOpen={isEditingProfile} onClose={() => setIsEditingProfile(false)} currentName={userName} currentAvatar={userAvatar} onSave={handleProfileSave} />
 
         {showChangePassword && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

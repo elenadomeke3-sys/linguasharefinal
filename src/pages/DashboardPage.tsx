@@ -4,7 +4,8 @@ import { Button } from "@/components/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { Upload, Download, FileText, CreditCard, Plus, FolderOpen, Edit } from "lucide-react";
-import { useUserStore } from "@/store";
+import { useAuthStore } from "@/store/authStore";
+import { supabase } from "@/lib/supabase";
 import ProfileEditor from "@/components/ProfileEditor";
 import { X } from "lucide-react";
 import { Input } from "@/components/Input";
@@ -23,14 +24,14 @@ function formatDownloads(count: number): string {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout, getAvailableDownloads, upgradeToPremium, updateProfile } = useUserStore();
+  const { user, signOut } = useAuthStore();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [changePasswordStatus, setChangePasswordStatus] = useState("");
 
-  if (!isAuthenticated || !user) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
         <Card className="max-w-md w-full">
@@ -44,17 +45,26 @@ export default function DashboardPage() {
     );
   }
 
-  const downloadsRemaining = getAvailableDownloads();
-  const isPremium = user.isPremium;
+  const userName = user.user_metadata?.full_name || "Użytkownik";
+  const userAvatar = user.user_metadata?.avatar_url || "";
+  const userEmail = user.email || "";
+  const isPremium = user.user_metadata?.is_premium || false;
+  const downloadsRemaining = 3; // MVP limit mock
+  const materialsUploaded = materials.filter(m => m.author.name === userName).length;
+  const userCredits = 0; // MVP mock
 
-  const handleProfileSave = (name: string, avatar: string) => {
-    updateProfile({ name, avatar });
+  const upgradeToPremium = () => alert("Integracja Stripe wkrótce!");
+
+  const handleProfileSave = async (name: string, avatar: string) => {
+    await supabase.auth.updateUser({
+      data: { full_name: name, avatar_url: avatar }
+    });
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     setChangePasswordStatus("");
-    const success = updateProfile({ password: newPassword, oldPassword });
-    if (success) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (!error) {
       setChangePasswordStatus("success");
       setOldPassword("");
       setNewPassword("");
@@ -64,8 +74,8 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate("/");
   };
 
@@ -80,16 +90,16 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-4 mb-4">
                   <Link to="/profile">
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
-                      {user.avatar ? (
-                        <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      {userAvatar ? (
+                        <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-xl font-medium text-primary">{user.name[0]}</span>
+                        <span className="text-xl font-medium text-primary">{userName[0]}</span>
                       )}
                     </div>
                   </Link>
                   <div>
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <p className="font-medium">{userName}</p>
+                    <p className="text-sm text-muted-foreground">{userEmail}</p>
                   </div>
                 </div>
                 <div className="space-y-3">
@@ -120,11 +130,11 @@ export default function DashboardPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-primary/10 rounded-lg"><Upload className="h-4 w-4 text-primary" /></div>
-                  <div><p className="text-2xl font-bold">{user.materialsUploaded}</p><p className="text-xs text-muted-foreground">Dodane materiały</p></div>
+                  <div><p className="text-2xl font-bold">{materialsUploaded}</p><p className="text-xs text-muted-foreground">Dodane materiały</p></div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-green-100 rounded-lg"><Download className="h-4 w-4 text-green-600" /></div>
-                  <div><p className="text-2xl font-bold">{user.credits + user.bonusDownloads}</p><p className="text-xs text-muted-foreground">Bonusy</p></div>
+                  <div><p className="text-2xl font-bold">{userCredits}</p><p className="text-xs text-muted-foreground">Bonusy</p></div>
                 </div>
               </CardContent>
             </Card>
@@ -142,7 +152,7 @@ export default function DashboardPage() {
           <div className="lg:col-span-3 space-y-6">
             <Card className="bg-gradient-to-r from-primary to-purple-600 text-white">
               <CardContent className="p-6">
-                <h2 className="text-2xl font-bold mb-2">Witaj, {user.name.split(" ")[0]}!</h2>
+                <h2 className="text-2xl font-bold mb-2">Witaj, {userName.split(" ")[0]}!</h2>
                 <p className="text-white/90 mb-4 font-medium">
                   {isPremium ? <span>Masz nieograniczony dostęp do wszystkich materiałów Premium! 🎉</span> : <span>Masz {formatDownloads(downloadsRemaining)} w tym miesiącu. Zaktualizuj do Premium dla nieograniczonych pobrań!</span>}
                 </p>
@@ -188,7 +198,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <ProfileEditor isOpen={isEditingProfile} onClose={() => setIsEditingProfile(false)} currentName={user.name} currentAvatar={user.avatar} onSave={handleProfileSave} />
+        <ProfileEditor isOpen={isEditingProfile} onClose={() => setIsEditingProfile(false)} currentName={userName} currentAvatar={userAvatar} onSave={handleProfileSave} />
 
         {showChangePassword && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
