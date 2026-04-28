@@ -13,9 +13,13 @@ import {
   FileText,
   Loader2,
   Lock,
+  MessageSquare,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useUserStore } from "@/store";
+import { useReviewStore } from "@/store";
 import { Material } from "@/data/materials";
 import { supabase } from "@/lib/supabase";
 
@@ -31,11 +35,15 @@ export default function MaterialDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { getAvailableDownloads } = useUserStore();
+  const { reviews, fetchReviews, submitReview, updateReview, deleteReview, error: reviewError } = useReviewStore();
   const [material, setMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userRating, setUserRating] = useState(0);
   const [comment, setComment] = useState("");
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [editingReview, setEditingReview] = useState<string | null>(null);
+  const [editRating, setEditRating] = useState(0);
+  const [editComment, setEditComment] = useState("");
 
   function formatDownloads(count: number): string {
     if (count === 1) return "1 pobranie";
@@ -86,6 +94,14 @@ export default function MaterialDetailPage() {
     fetchMaterial();
   }, [id]);
 
+  // Fetch reviews when material loads
+  useEffect(() => {
+    if (material?.id) {
+      fetchReviews(material.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [material?.id]);
+
   const handleDownload = () => {
     if (!user) {
       setDownloadError("Zaloguj się, aby pobierać materiały");
@@ -107,6 +123,42 @@ export default function MaterialDetailPage() {
 
     window.open(material.file_url, '_blank');
     setDownloadError(null);
+  };
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !material) return;
+
+    await submitReview(material.id, userRating, comment);
+    setUserRating(0);
+    setComment("");
+  };
+
+  const handleEditReview = (reviewId: string, rating: number, commentText: string) => {
+    setEditingReview(reviewId);
+    setEditRating(rating);
+    setEditComment(commentText || "");
+  };
+
+  const handleUpdateReview = async (reviewId: string) => {
+    if (!material) return;
+    await updateReview(reviewId, editRating, editComment);
+    setEditingReview(null);
+    setEditRating(0);
+    setEditComment("");
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!material) return;
+    if (confirm("Czy na pewno chcesz usunąć tę recenzję?")) {
+      await deleteReview(reviewId, material.id);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReview(null);
+    setEditRating(0);
+    setEditComment("");
   };
 
   if (isLoading) {
@@ -176,16 +228,16 @@ export default function MaterialDetailPage() {
                 {material.description}
               </p>
 
-               {/* Podgląd zawartości */}
-               <div className="mb-6">
-                 <p className="text-sm font-medium mb-2">Treść materiału</p>
-                 <div className="relative h-64 bg-muted rounded-lg overflow-hidden border p-4">
-                   <div className="overflow-y-auto h-full text-sm text-muted-foreground break-words overflow-wrap:break-word">
-                     {material.content || material.description}
-                   </div>
-                   <div className="absolute inset-0 bg-gradient-to-t from-muted/80 via-muted/20 to-transparent pointer-events-none" />
-                 </div>
-               </div>
+              {/* Podgląd zawartości */}
+              <div className="mb-6">
+                <p className="text-sm font-medium mb-2">Treść materiału</p>
+                <div className="relative h-64 bg-muted rounded-lg overflow-hidden border p-4">
+                  <div className="overflow-y-auto h-full text-sm text-muted-foreground break-words overflow-wrap:break-word">
+                    {material.content || material.description}
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-muted/80 via-muted/20 to-transparent pointer-events-none" />
+                </div>
+              </div>
 
               {/* Przycisk pobierania */}
               <Button className="w-full mb-4" onClick={handleDownload}>
@@ -256,31 +308,215 @@ export default function MaterialDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Ratings */}
+          {/* Reviews Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Oceń materiał</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Recenzje ({material.total_ratings || 0})
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setUserRating(star)}
-                    className="focus:outline-none"
-                  >
-                    <Star
-                      className={`h-6 w-6 ${star <= userRating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`}
+            <CardContent className="space-y-6">
+              {reviewError && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
+                  {reviewError}
+                </div>
+              )}
+
+              {/* User's existing review (if any) */}
+              {user && reviews[material.id]?.some(r => r.user_id === user.id) && (() => {
+                const myReview = reviews[material.id]?.find(r => r.user_id === user.id);
+                if (!myReview) return null;
+                if (editingReview === myReview.id) {
+                  return (
+                    <div className="border rounded-lg p-4 bg-muted/30">
+                      <h4 className="text-sm font-medium mb-3">Edytuj recenzję</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Nowa ocena</label>
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => setEditRating(star)}
+                                className="focus:outline-none"
+                              >
+                                <Star
+                                  className={`h-6 w-6 ${star <= editRating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`}
+                                />
+                              </button>
+                            ))}
+                            <span className="ml-2 text-sm text-muted-foreground">
+                              {editRating}/5
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium mb-2 block">Komentarz</label>
+                          <Textarea
+                            placeholder="Edytuj komentarz..."
+                            value={editComment}
+                            onChange={(e) => setEditComment(e.target.value)}
+                            rows={3}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button type="button" onClick={() => handleUpdateReview(myReview.id)}>
+                            Zapisz zmiany
+                          </Button>
+                          <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                            Anuluj
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="border rounded-lg p-4 bg-muted/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium">Twoja recenzja</p>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditReview(myReview.id, myReview.rating, myReview.comment || "")}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edytuj
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteReview(myReview.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Usuń
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 mb-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`h-4 w-4 ${star <= myReview.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`}
+                        />
+                      ))}
+                    </div>
+                    {myReview.comment && (
+                      <p className="text-sm text-muted-foreground break-words">{myReview.comment}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {new Date(myReview.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                );
+              })()}
+
+              {/* Review Form */}
+              {user && (!reviews[material.id] || !reviews[material.id].find(r => r.user_id === user.id)) && (
+                <form onSubmit={handleSubmitReview} className="space-y-4 border rounded-lg p-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Twoja ocena</label>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setUserRating(star)}
+                          className="focus:outline-none"
+                        >
+                          <Star
+                            className={`h-6 w-6 ${star <= userRating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`}
+                          />
+                        </button>
+                      ))}
+                      <span className="ml-2 text-sm text-muted-foreground">
+                        {userRating > 0 ? `${userRating}/5` : "Wybierz ocenę"}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Komentarz (opcjonalnie)</label>
+                    <Textarea
+                      placeholder="Dodaj komentarz..."
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      rows={3}
                     />
-                  </button>
-                ))}
+                  </div>
+                  <Button type="submit" disabled={userRating === 0 || !user}>
+                    {userRating === 0 ? "Wybierz ocenę" : "Dodaj recenzję"}
+                  </Button>
+                </form>
+              )}
+
+              {/* Reviews List */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium">Wszystkie recenzje</h4>
+                {!reviews[material.id] || reviews[material.id].length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Brak recenzji. Bądź pierwszy!
+                  </p>
+                ) : (
+                  reviews[material.id]?.map((review) => (
+                    <div key={review.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-xs font-medium">
+                              {review.user_name?.[0] || "U"}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">{review.user_name || "Anonim"}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(review.created_at).toLocaleDateString()}
+                              {review.updated_at !== review.created_at && " (edytowano)"}
+                            </p>
+                          </div>
+                        </div>
+                        {review.user_id === user?.id && editingReview !== review.id && (
+                          <div className="flex gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleEditReview(review.id, review.rating, review.comment || "")}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-500"
+                              onClick={() => handleDeleteReview(review.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 mb-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`h-4 w-4 ${star <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`}
+                          />
+                        ))}
+                      </div>
+                      {review.comment && (
+                        <p className="text-sm text-muted-foreground break-words">{review.comment}</p>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
-              <Textarea
-                placeholder="Komentarz (opcjonalnie)"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-              />
-              <Button disabled={userRating === 0}>Wyślij ocenę</Button>
             </CardContent>
           </Card>
         </div>

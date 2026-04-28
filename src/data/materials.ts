@@ -16,3 +16,15 @@ export interface Material {
   file_url?: string;
   content?: string;
 }
+
+export interface Review {
+  id: string;
+  material_id: string;
+  user_id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  updated_at: string;
+  user_name?: string;
+  user_avatar?: string;
+}
