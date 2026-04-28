@@ -190,6 +190,41 @@ Policy definition:
   WITH CHECK (bucket_id = 'materials' AND auth.role() = 'authenticated');
 ```
 
+---
+
+## 🔐 **Konfiguracja RLS dla tabeli `materials` (wymagana do edycji/usuwania)**
+
+Aby autorzy mogli edytować i usuwać swoje materiały, musisz włączyć **Row Level Security** na tabeli `materials` i dodać polityki:
+
+### W SQL Editor (Supabase Dashboard):
+
+```sql
+-- Włącz RLS na tabeli materials
+ALTER TABLE public.materials ENABLE ROW LEVEL SECURITY;
+
+-- Polityka: Publiczny dostęp do odczytu
+CREATE POLICY "Public read materials" ON public.materials
+  FOR SELECT USING (true);
+
+-- Polityka: Zalogowani mogą dodawać swoje materiały
+CREATE POLICY "Authenticated insert materials" ON public.materials
+  FOR INSERT WITH CHECK (auth.role() = 'authenticated' AND auth.uid() = author_id);
+
+-- Polityka: Właściciel może edytować swoje materiały
+CREATE POLICY "Owner can update materials" ON public.materials
+  FOR UPDATE USING (auth.uid() = author_id);
+
+-- Polityka: Właściciel może usuwać swoje materiały
+CREATE POLICY "Owner can delete materials" ON public.materials
+  FOR DELETE USING (auth.uid() = author_id);
+```
+
+Po dodaniu tych polityk:
+- ✅ Każdy może przeglądać materiały (publiczne)
+- ✅ Zalogowani mogą dodawać materiały (autor jest przypisany)
+- ✅ Tylko autor może edytować/swój materiał
+- ✅ Tylko autor może usunąć swój materiał
+
 > ⚠️ **UWAGA:** Bez tych polityk upload zakończy się błędem "Permission denied".
 
 ### Krok 3: Włącz CORS (opcjonalnie, ale zalecane)
