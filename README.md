@@ -85,6 +85,7 @@ Oddaj 3 materiały → dostajesz nielimitowane pobrania (zastępuje Premium)
 - Katalog materiałów z filtrami (język, poziom, typ)
 - Strona szczegółów z podglądem
 - System logowania/rejestracji
+- **Resetowanie hasła (Zapomniałem hasło)**
 - Upload materiałów z auto-tagging
 - Download z liczeniem limitu
 - Dashboard użytkownika
@@ -92,7 +93,7 @@ Oddaj 3 materiały → dostajesz nielimitowane pobrania (zastępuje Premium)
 - 16 przykładowych materiałów
 
 ⏳ **Do dodania:**
-- Backend (Supabase/Firebase)
+- Backend (Supabase/Firebase) — aktualna integracja w toku
 - Płatności (Stripe)
 - Pełna weryfikacja email
 - System ocen i komentarzy
