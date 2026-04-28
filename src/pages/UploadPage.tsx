@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/Card";
-import { Upload, FileText, X, CheckCircle2, Loader2 } from "lucide-react";
+import { Upload, FileText, X, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/lib/supabase";
 
@@ -109,6 +109,7 @@ export default function UploadPage() {
   } | null>(null);
   const [actualFile, setActualFile] = useState<File | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -130,31 +131,44 @@ export default function UploadPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
     if (
       !formData.title ||
       !formData.language ||
       !formData.level ||
       !formData.type
     ) {
-      alert("Proszę wypełnić wszystkie wymagane pola");
+      setError("Proszę wypełnić wszystkie wymagane pola");
+      return;
+    }
+
+    if (!actualFile) {
+      setError("Wybierz plik do przesłania");
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
       let fileUrl = "";
-      
+
       if (actualFile) {
         const fileExt = actualFile.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-        
+
         const { error: uploadError } = await supabase.storage
           .from('materials')
-          .upload(fileName, actualFile);
-          
-        if (uploadError) throw new Error("Błąd podczas wgrywania pliku: " + uploadError.message);
-        
+          .upload(fileName, actualFile, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) {
+          console.error('Storage upload error:', uploadError);
+          throw new Error("Błąd podczas wgrywania pliku: " + uploadError.message);
+        }
+
         const { data: { publicUrl } } = supabase.storage.from('materials').getPublicUrl(fileName);
         fileUrl = publicUrl;
       }
@@ -169,17 +183,23 @@ export default function UploadPage() {
         is_premium: formData.isPremium,
         file_url: fileUrl,
         author_id: user?.id,
-        author_name: user?.user_metadata?.full_name || "Użytkownik"
+        author_name: user?.user_metadata?.full_name || "Użytkownik",
+        downloads: 0,
+        average_rating: 0,
+        total_ratings: 0,
       });
 
-      if (dbError) throw new Error("Błąd zapisu do bazy: " + dbError.message);
+      if (dbError) {
+        console.error('Database insert error:', dbError);
+        throw new Error("Błąd zapisu do bazy: " + dbError.message);
+      }
 
       setIsLoading(false);
       setIsSuccess(true);
       setTimeout(() => navigate("/materials"), 2000);
     } catch (error: any) {
       setIsLoading(false);
-      alert(error.message);
+      setError(error.message);
     }
   };
 
@@ -210,13 +230,19 @@ export default function UploadPage() {
 
           <form onSubmit={handleSubmit}>
             <Card>
-              <CardHeader>
-                <CardTitle>Plik materiału</CardTitle>
-                <CardDescription>
-                  Prześlij plik PDF, DOCX lub obraz (max. 10MB)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+          <CardHeader>
+            <CardTitle>Plik materiału</CardTitle>
+            <CardDescription>
+              Prześlij plik PDF, DOCX lub obraz (max. 10MB)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {error && (
+              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
                 {!uploadedFile ? (
                   <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
                     <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

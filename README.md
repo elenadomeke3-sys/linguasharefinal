@@ -154,6 +154,55 @@ Supabase free tier blokuje wysyłkę emaili dla niepotwierdzonych domen. Aby to 
 
 ---
 
+## 📁 Konfiguracja Supabase Storage (wymagana do uploadu)
+
+Aby przesyłać pliki, musisz skonfigurować **Storage bucket**:
+
+### Krok 1: Utwórz bucket `materials`
+1. Zaloguj się do [Supabase Dashboard](https://app.supabase.com)
+2. Wybierz projekt → **Storage** → **Buckets**
+3. Kliknij **"Create bucket"**
+   - **Name:** `materials`
+   - **Public bucket:** `ON` (plików będą publicznie dostępne)
+   - **File size limit:** `50MB` (opcjonalnie)
+4. Kliknij **Create**
+
+### Krok 2: Ustaw polityki RLS (Row Level Security)
+Kliknij bucket `materials` → **Policies** → **Add policy**
+
+Dodaj 2 polityki:
+
+**a) Publiczny dostęp do odczytu (SELECT):**
+```
+Policy name: Public read access
+Allowed operation: SELECT
+Policy definition:
+  CREATE POLICY "Public read access" ON storage.objects FOR SELECT
+  USING (bucket_id = 'materials');
+```
+
+**b) Upload dla zalogowanych (INSERT):**
+```
+Policy name: Authenticated upload
+Allowed operation: INSERT
+Policy definition:
+  CREATE POLICY "Authenticated upload" ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'materials' AND auth.role() = 'authenticated');
+```
+
+> ⚠️ **UWAGA:** Bez tych polityk upload zakończy się błędem "Permission denied".
+
+### Krok 3: Włącz CORS (opcjonalnie, ale zalecane)
+W bucketie → **Settings** → **CORS**:
+```
+Allowed origins: *
+Allowed methods: GET, POST, PUT, DELETE, OPTIONS
+Allowed headers: *
+Max age: 3600
+```
+
+---
+
 ## Kontakt
 
 kontakt@linguashare.pl
