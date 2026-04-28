@@ -122,10 +122,15 @@ Aby funkcja **"Zapomniałem hasła"** działała, musisz skonfigurować wysyłk�
 2. Przejdź do **Authentication** → **Email Templates**
 3. Upewnij się, że szablon **"Reset Password"** jest aktywny
 
-### Krok 2: Skonfiguruj Site URL
+### Krok 2: Skonfiguruj Site URL i Redirect URLs
 1. **Settings** → **Authentication**
 2. W polu **Site URL** wpisz: `https://linguashare.vercel.app`
-3. Zapisz zmiany
+3. W polu **Redirect URLs** dodaj:
+   ```
+   https://linguashare.vercel.app/reset-password
+   https://linguashare.vercel.app/auth
+   ```
+4. Zapisz zmiany
 
 ### Krok 3: (Opcjonalnie) Potwierdź domenę
 Supabase free tier blokuje wysyłkę emaili dla niepotwierdzonych domen. Aby to naprawić:

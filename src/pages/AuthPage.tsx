@@ -94,7 +94,7 @@ export default function AuthPage() {
     }
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
+   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!loginData.email) {
@@ -104,7 +104,7 @@ export default function AuthPage() {
 
     setIsLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(loginData.email, {
-      redirectTo: `${window.location.origin}/dashboard`,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
     setIsLoading(false);
 

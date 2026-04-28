@@ -12,6 +12,7 @@ import FAQPage from "./pages/FAQPage";
 import ContactPage from "./pages/ContactPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="materials" element={<MaterialsPage />} />
         <Route path="materials/:id" element={<MaterialDetailPage />} />
         <Route path="auth" element={<AuthPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
         
         {/* Widoki chronione przed niezalogowanymi gośćmi */}
         <Route element={<ProtectedRoute />}>
