@@ -13,26 +13,20 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   session: null,
-  // Ustawiamy na true domyślnie, aby móc pokazać ekran ładowania podczas weryfikacji sesji
-  isLoading: true, 
+  isLoading: true,
 
   initialize: () => {
-    // 1. Sprawdzamy aktualną sesję przy pierwszym załadowaniu aplikacji
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      set({ session, user: session?.user ?? null, isLoading: false });
-    });
-
-    // 2. Nasłuchujemy na zmiany (np. kiedy użytkownik się zaloguje lub wyloguje)
+    // Nasłuchujemy na zmiany sesji — callback wywoła się NATYCHMIAST z aktualnym stanem
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       set({ session, user: session?.user ?? null, isLoading: false });
     });
 
-    // Zwracamy funkcję czyszczącą na wypadek odmontowania nasłuchiwacza
+    // Zwracamy funkcję czyszczącą
     return () => subscription.unsubscribe();
   },
 
   signOut: async () => {
     await supabase.auth.signOut();
-    set({ user: null, session: null });
+    set({ user: null, session: null, isLoading: false });
   },
 }));

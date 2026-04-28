@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
 import Layout from "./components/Layout";
 import HomePage from "./pages/HomePage";
 import MaterialsPage from "./pages/MaterialsPage";
@@ -13,8 +14,16 @@ import ContactPage from "./pages/ContactPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import { useAuthStore } from "./store/authStore";
 
 function App() {
+  const initialize = useAuthStore((state) => state.initialize);
+
+  useEffect(() => {
+    initialize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
