@@ -3,7 +3,8 @@
 **Autor:** Elena Ewangelopulu  
 **Data utworzenia:** 16 marca 2026  
 **Status:** MVP gotowe do uruchomienia
-**Link do strony** : [https://linguashare.vercel.app](https://linguashare.vercel.app)---
+
+**Link do strony** : [https://linguashare.vercel.app](https://linguashare.vercel.app)
 
 ## Pomysł
 
