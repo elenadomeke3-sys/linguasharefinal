@@ -11,6 +11,7 @@ import AboutPage from "./pages/AboutPage";
 import FAQPage from "./pages/FAQPage";
 import ContactPage from "./pages/ContactPage";
 import UserProfilePage from "./pages/UserProfilePage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -20,13 +21,18 @@ function App() {
         <Route path="materials" element={<MaterialsPage />} />
         <Route path="materials/:id" element={<MaterialDetailPage />} />
         <Route path="auth" element={<AuthPage />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="dashboard/upload" element={<UploadPage />} />
+        
+        {/* Widoki chronione przed niezalogowanymi gośćmi */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="dashboard/upload" element={<UploadPage />} />
+          <Route path="profile" element={<UserProfilePage />} />
+        </Route>
+
         <Route path="pricing" element={<PricingPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="faq" element={<FAQPage />} />
         <Route path="contact" element={<ContactPage />} />
-        <Route path="profile" element={<UserProfilePage />} />
       </Route>
     </Routes>
   );

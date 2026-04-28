@@ -14,7 +14,7 @@ import {
   Loader2,
   Lock,
 } from "lucide-react";
-import { useUserStore } from "@/store";
+import { useAuthStore } from "@/store/authStore";
 import { materials, getMaterialById } from "@/data/materials";
 
 const typeLabels: Record<string, string> = {
@@ -27,7 +27,7 @@ const typeLabels: Record<string, string> = {
 export default function MaterialDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated, recordDownload, getAvailableDownloads } = useUserStore();
+  const { user } = useAuthStore();
   const [material, setMaterial] = useState(materials[0]);
   const [isLoading, setIsLoading] = useState(true);
   const [userRating, setUserRating] = useState(0);
@@ -50,23 +50,17 @@ export default function MaterialDetailPage() {
   }, [id]);
 
   const handleDownload = () => {
-    if (!isAuthenticated) {
+    if (!user) {
       setDownloadError("Zaloguj się, aby pobierać materiały");
       return;
     }
     
-    if (material?.isPremium && !user?.isPremium) {
+    const isPremiumUser = user.user_metadata?.is_premium || false;
+    if (material?.isPremium && !isPremiumUser) {
       setDownloadError("Ten materiał jest dostępny tylko dla subskrybentów Premium");
       return;
-    }
-    
-    const canDownloadResult = recordDownload(id || "");
-    if (!canDownloadResult) {
-      const available = getAvailableDownloads();
-      setDownloadError(`Osiągnąłeś limit pobrań. Dostępne ${formatDownloads(available)}. Zaktualizuj do Premium!`);
-      return;
-    }
-    
+      }
+      
     // Generowanie i pobieranie pliku
     const content = material?.content || material?.description || "Brak treści";
     const fileName = `${material?.title.toLowerCase().replace(/\s+/g, '-')}.txt`;
@@ -263,7 +257,7 @@ export default function MaterialDetailPage() {
               <CardTitle className="text-lg">Pobierz materiał</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isAuthenticated && !user?.isPremium && (
+              {user && !(user.user_metadata?.is_premium) && (
                 <div className="text-sm text-muted-foreground text-center py-2 bg-muted/50 rounded">
                   Pozostało {formatDownloads(getAvailableDownloads())} w tym miesiącu
                 </div>
@@ -275,7 +269,7 @@ export default function MaterialDetailPage() {
                 </div>
               )}
               
-              {material?.isPremium && !user?.isPremium ? (
+              {material?.isPremium && !(user.user_metadata?.is_premium) ? (
                 <Button 
                   className="w-full" 
                   variant="secondary"
