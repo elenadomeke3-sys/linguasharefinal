@@ -1,6 +1,19 @@
-# ICP Persona — LinguaShare
+# Wymagania Biznesowe i ICP Persona — LinguaShare
+
+*(Dokument dostosowany do standardu Spec Driven Development - docelowa lokalizacja: /docs/business)*
 
 **Data:** 16 marca 2026
+
+---
+
+## Cele biznesowe i User Stories
+1. **Cel produktu:** Zmniejszenie czasu potrzebnego na przygotowanie materiałów przez nauczycieli (oszczędność 2-5h tygodniowo).
+2. **Cel biznesowy:** Budowa zaangażowanej społeczności wymieniającej się wiedzą w modelu "give-to-get".
+
+### Przypadki użycia (User Stories)
+- **Jako Marta (Korepetytorka)** chcę łatwo wyszukiwać materiały po tagach (język, poziom), aby skrócić czas przygotowań do lekcji.
+- **Jako Tomek (Nauczyciel)** chcę mieć dostęp do jakościowych i zweryfikowanych testów, aby nie musieć układać ich samodzielnie.
+- **Jako Ania (Studentka)** chcę móc dzielić się moimi pierwszymi materiałami, aby zyskać dostęp do bazy premium za darmo (Give-to-Get).
 
 ---
 
