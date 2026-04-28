@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/Button";
+import { Input } from "@/components/Input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { Textarea } from "@/components/Textarea";
@@ -16,12 +17,40 @@ import {
   MessageSquare,
   Edit,
   Trash2,
+  X,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useUserStore } from "@/store";
 import { useReviewStore } from "@/store";
 import { Material } from "@/data/materials";
 import { supabase } from "@/lib/supabase";
+
+const LANGUAGES = [
+  { value: "angielski", label: "Angielski" },
+  { value: "niemiecki", label: "Niemiecki" },
+  { value: "francuski", label: "Francuski" },
+  { value: "hiszpanski", label: "Hiszpański" },
+  { value: "włoski", label: "Włoski" },
+  { value: "rosyjski", label: "Rosyjski" },
+];
+
+const LEVELS = [
+  { value: "A1", label: "A1 - Początkujący" },
+  { value: "A2", label: "A2 - Podstawowy" },
+  { value: "B1", label: "B1 - Średniozaawansowany" },
+  { value: "B2", label: "B2 - Średniozaawansowany+" },
+  { value: "C1", label: "C1 - Zaawansowany" },
+  { value: "C2", label: "C2 - Biegły" },
+];
+
+const TYPES = [
+  { value: "FLASHCARDS", label: "Słówka / Fiszki" },
+  { value: "WORKSHEET", label: "Ćwiczenia" },
+  { value: "TEST", label: "Testy" },
+  { value: "LESSON_PLAN", label: "Scenariusze lekcji" },
+  { value: "EXAM", label: "Sprawdziany" },
+  { value: "PRESENTATION", label: "Prezentacje" },
+];
 
 const typeLabels: Record<string, string> = {
   WORKSHEET: "Arkusz ćwiczeń",
@@ -44,6 +73,17 @@ export default function MaterialDetailPage() {
   const [editingReview, setEditingReview] = useState<string | null>(null);
   const [editRating, setEditRating] = useState(0);
   const [editComment, setEditComment] = useState("");
+  const [isEditingMaterial, setIsEditingMaterial] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    description: "",
+    language: "",
+    level: "",
+    type: "",
+    tags: "",
+    isPremium: false,
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
 
   function formatDownloads(count: number): string {
     if (count === 1) return "1 pobranie";
@@ -161,6 +201,68 @@ export default function MaterialDetailPage() {
     setEditComment("");
   };
 
+  const handleOpenEdit = () => {
+    if (!material) return;
+    setEditForm({
+      title: material.title,
+      description: material.description || "",
+      language: material.language,
+      level: material.level,
+      type: material.type,
+      tags: material.tags?.join(", ") || "",
+      isPremium: material.is_premium,
+    });
+    setIsEditingMaterial(true);
+  };
+
+  const handleCloseEdit = () => {
+    setIsEditingMaterial(false);
+  };
+
+  const handleUpdateMaterial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!material || !user) return;
+
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('materials')
+        .update({
+          title: editForm.title,
+          description: editForm.description,
+          language: editForm.language,
+          level: editForm.level,
+          type: editForm.type,
+          tags: editForm.tags ? editForm.tags.split(",").map((t) => t.trim()) : [],
+          is_premium: editForm.isPremium,
+        })
+        .eq('id', material.id);
+
+      if (error) throw error;
+
+      // Refresh material data
+      const { data } = await supabase
+        .from('materials')
+        .select('*')
+        .eq('id', material.id)
+        .single();
+
+      if (data) {
+        setMaterial({
+          ...material,
+          ...data,
+        });
+      }
+
+      setIsEditingMaterial(false);
+    } catch (error: any) {
+      console.error('Update error:', error);
+      alert("Błąd aktualizacji: " + error.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -218,6 +320,17 @@ export default function MaterialDetailPage() {
                       <Badge className="bg-gradient-to-r from-primary to-purple-600">
                         Premium
                       </Badge>
+                    )}
+                    {user?.id === material.author_id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="ml-auto"
+                        onClick={handleOpenEdit}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edytuj
+                      </Button>
                     )}
                   </div>
                   <h1 className="text-2xl font-bold">{material.title}</h1>
@@ -563,6 +676,119 @@ export default function MaterialDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Edit Material Modal */}
+      {isEditingMaterial && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Edytuj materiał</h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={handleCloseEdit}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="p-4">
+              <form onSubmit={handleUpdateMaterial} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Tytuł *</label>
+                  <Input
+                    value={editForm.title}
+                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Opis</label>
+                  <Textarea
+                    value={editForm.description}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Język *</label>
+                    <select
+                      className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm w-full"
+                      value={editForm.language}
+                      onChange={(e) => setEditForm({ ...editForm, language: e.target.value })}
+                      required
+                    >
+                      {LANGUAGES.map((l) => (
+                        <option key={l.value} value={l.value}>
+                          {l.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Poziom *</label>
+                    <select
+                      className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm w-full"
+                      value={editForm.level}
+                      onChange={(e) => setEditForm({ ...editForm, level: e.target.value })}
+                      required
+                    >
+                      {LEVELS.map((l) => (
+                        <option key={l.value} value={l.value}>
+                          {l.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Typ *</label>
+                    <select
+                      className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm w-full"
+                      value={editForm.type}
+                      onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
+                      required
+                    >
+                      {TYPES.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Tagi (oddzielone przecinkami)</label>
+                  <Input
+                    value={editForm.tags}
+                    onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="edit-premium"
+                    checked={editForm.isPremium}
+                    onChange={(e) => setEditForm({ ...editForm, isPremium: e.target.checked })}
+                    className="rounded"
+                  />
+                  <label htmlFor="edit-premium" className="text-sm">
+                    Materiał Premium (tylko dla subskrybentów)
+                  </label>
+                </div>
+                <div className="flex gap-2 pt-4 border-t">
+                  <Button type="submit" disabled={isUpdating}>
+                    {isUpdating ? "Zapisywanie..." : "Zapisz zmiany"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleCloseEdit}>
+                    Anuluj
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
