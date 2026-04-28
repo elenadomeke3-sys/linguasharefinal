@@ -234,7 +234,7 @@ export default function MaterialsPage() {
                       <Badge variant="secondary">{material.level}</Badge>
                       {material.is_premium && <Badge>Premium</Badge>}
                     </div>
-                    <h3 className="font-medium mb-1">{material.title}</h3>
+                     <h3 className="font-medium mb-1 line-clamp-2 break-words">{material.title}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-1">
                       {material.description}
                     </p>

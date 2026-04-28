@@ -110,10 +110,10 @@ export default function DashboardPage() {
                       )}
                     </div>
                   </Link>
-                  <div>
-                    <p className="font-medium">{userName}</p>
-                    <p className="text-sm text-muted-foreground">{userEmail}</p>
-                  </div>
+                   <div>
+                     <p className="font-medium break-words">{userName}</p>
+                     <p className="text-sm text-muted-foreground break-words">{userEmail}</p>
+                   </div>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">

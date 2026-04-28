@@ -176,16 +176,16 @@ export default function MaterialDetailPage() {
                 {material.description}
               </p>
 
-              {/* Podgląd zawartości */}
-              <div className="mb-6">
-                <p className="text-sm font-medium mb-2">Treść materiału</p>
-                <div className="relative h-64 bg-muted rounded-lg overflow-hidden border p-4">
-                  <div className="overflow-y-auto h-full text-sm text-muted-foreground">
-                    {material.content || material.description}
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-muted/80 via-muted/20 to-transparent pointer-events-none" />
-                </div>
-              </div>
+               {/* Podgląd zawartości */}
+               <div className="mb-6">
+                 <p className="text-sm font-medium mb-2">Treść materiału</p>
+                 <div className="relative h-64 bg-muted rounded-lg overflow-hidden border p-4">
+                   <div className="overflow-y-auto h-full text-sm text-muted-foreground break-words overflow-wrap:break-word">
+                     {material.content || material.description}
+                   </div>
+                   <div className="absolute inset-0 bg-gradient-to-t from-muted/80 via-muted/20 to-transparent pointer-events-none" />
+                 </div>
+               </div>
 
               {/* Przycisk pobierania */}
               <Button className="w-full mb-4" onClick={handleDownload}>
