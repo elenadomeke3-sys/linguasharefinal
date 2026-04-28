@@ -263,6 +263,30 @@ export default function MaterialDetailPage() {
     }
   };
 
+  const handleDeleteMaterial = async () => {
+    if (!material || !user) return;
+    if (!confirm("Czy na pewno chcesz usunąć ten materiał? Tej operacji nie można cofnąć.")) {
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('materials')
+        .delete()
+        .eq('id', material.id);
+
+      if (error) throw error;
+
+      // Redirect to materials list after successful delete
+      navigate("/materials");
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      alert("Błąd usuwania: " + error.message);
+      setIsUpdating(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -322,15 +346,25 @@ export default function MaterialDetailPage() {
                       </Badge>
                     )}
                     {user?.id === material.author_id && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="ml-auto"
-                        onClick={handleOpenEdit}
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edytuj
-                      </Button>
+                      <div className="flex gap-2 ml-auto">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleOpenEdit}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edytuj
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={handleDeleteMaterial}
+                          disabled={isUpdating}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Usuń
+                        </Button>
+                      </div>
                     )}
                   </div>
                   <h1 className="text-2xl font-bold">{material.title}</h1>
