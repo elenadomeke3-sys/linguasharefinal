@@ -14,3 +14,8 @@
 - status: DONE
 - plan: PLAN_supabase_upload.md
 - opis: Zastąpienie lokalnego stanu prawdziwym zapisem do Supabase. Wrzucanie plików do bucketa Storage i zapisywanie metadanych formularza do bazy danych PostgreSQL. Zrealizowano w `src/pages/UploadPage.tsx`.
+
+## Pobieranie danych z Supabase (Fetch)
+- status: DONE
+- plan: PLAN_supabase_fetch.md
+- opis: Usunięcie statycznych tablic mockowych. Integracja katalogu materiałów (`MaterialsPage.tsx`) z zapytaniami do bazy Supabase wraz z filtrowaniem. Zrealizowano dynamiczne statystyki w panelach.

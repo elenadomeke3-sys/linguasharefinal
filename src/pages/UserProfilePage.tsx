@@ -6,10 +6,10 @@ import { CreditCard, Edit, Download, Upload, FileText } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/lib/supabase";
 import ProfileEditor from "@/components/ProfileEditor";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Input } from "@/components/Input";
-import { materials, updateMaterial, deleteMaterial } from "@/data/materials";
+import { Material } from "@/data/materials";
 
 export default function UserProfilePage() {
   const navigate = useNavigate();
@@ -19,6 +19,19 @@ export default function UserProfilePage() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [changePasswordStatus, setChangePasswordStatus] = useState("");
+  const [myMaterials, setMyMaterials] = useState<Material[]>([]);
+  const [isLoadingMaterials, setIsLoadingMaterials] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      const fetchMaterials = async () => {
+        const { data } = await supabase.from('materials').select('*').eq('author_id', user.id).order('created_at', { ascending: false });
+        if (data) setMyMaterials(data);
+        setIsLoadingMaterials(false);
+      };
+      fetchMaterials();
+    }
+  }, [user]);
 
   if (!user) {
     return (
@@ -39,7 +52,7 @@ export default function UserProfilePage() {
   const userEmail = user.email || "";
   const isPremium = user.user_metadata?.is_premium || false;
   const downloadsRemaining = 3; // Mock w wersji MVP
-  const materialsUploaded = materials.filter(m => m.author.name === userName).length;
+  const materialsUploaded = myMaterials.length;
   const userCredits = 0; // Mock w wersji MVP
 
   const upgradeToPremium = () => alert("Integracja płatności Stripe pojawi się wkrótce!");
@@ -194,18 +207,25 @@ export default function UserProfilePage() {
           <CardHeader><CardTitle>Moje materiały</CardTitle><CardDescription>Zarządzaj swoimi dodanymi materiałami</CardDescription></CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {materials.filter(m => m.author.name === userName).length === 0 ? (
+            {isLoadingMaterials ? (
+              <p className="text-sm text-muted-foreground">Ładowanie materiałów...</p>
+            ) : myMaterials.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Nie dodałeś jeszcze żadnych materiałów.</p>
               ) : (
-                materials.filter(m => m.author.name === userName).map((m) => (
+              myMaterials.map((m) => (
                   <div key={m.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-muted flex items-center justify-center rounded"><FileText className="h-6 w-6 text-muted-foreground" /></div>
                       <div><p className="font-medium">{m.title}</p><p className="text-sm text-muted-foreground">{m.language} • {m.level}</p></div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => { updateMaterial(m.id, { title: m.title + ' [EDYTOWANY]' }); }}>Edytuj</Button>
-                      <Button variant="ghost" size="sm" onClick={() => { if(confirm('Usunąć materiał?')) deleteMaterial(m.id); }}>Usuń</Button>
+                    <Button variant="ghost" size="sm" onClick={() => { alert('Edycja wkrótce') }}>Edytuj</Button>
+                    <Button variant="ghost" size="sm" onClick={async () => { 
+                      if(confirm('Usunąć materiał?')) {
+                        await supabase.from('materials').delete().eq('id', m.id);
+                        setMyMaterials(myMaterials.filter(mat => mat.id !== m.id));
+                      }
+                    }}>Usuń</Button>
                     </div>
                   </div>
                 ))

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/Card";
 import { Badge } from "@/components/Badge";
@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 import ProfileEditor from "@/components/ProfileEditor";
 import { X } from "lucide-react";
 import { Input } from "@/components/Input";
-import { materials } from "@/data/materials";
+import { Material } from "@/data/materials";
 
 const MOCK_COLLECTIONS = [
   { id: "1", name: "Gramatyka: Czasowniki Modalne", materialsCount: 12 },
@@ -30,6 +30,19 @@ export default function DashboardPage() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [changePasswordStatus, setChangePasswordStatus] = useState("");
+  const [myMaterials, setMyMaterials] = useState<Material[]>([]);
+  const [isLoadingMaterials, setIsLoadingMaterials] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      const fetchMaterials = async () => {
+        const { data } = await supabase.from('materials').select('*').eq('author_id', user.id).order('created_at', { ascending: false });
+        if (data) setMyMaterials(data);
+        setIsLoadingMaterials(false);
+      };
+      fetchMaterials();
+    }
+  }, [user]);
 
   if (!user) {
     return (
@@ -50,7 +63,7 @@ export default function DashboardPage() {
   const userEmail = user.email || "";
   const isPremium = user.user_metadata?.is_premium || false;
   const downloadsRemaining = 3; // MVP limit mock
-  const materialsUploaded = materials.filter(m => m.author.name === userName).length;
+  const materialsUploaded = myMaterials.length;
   const userCredits = 0; // MVP mock
 
   const upgradeToPremium = () => alert("Integracja Stripe wkrótce!");
@@ -170,11 +183,15 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                   {materials.map((m) => (
+                   {isLoadingMaterials ? (
+                     <p className="text-sm text-muted-foreground">Ładowanie materiałów...</p>
+                   ) : myMaterials.length === 0 ? (
+                     <p className="text-sm text-muted-foreground">Nie dodałeś jeszcze żadnych materiałów.</p>
+                   ) : myMaterials.map((m) => (
                      <div key={m.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <Link to={`/materials/${m.id}`} className="flex items-center gap-4 flex-1">
                         <div className="w-12 h-12 bg-muted flex items-center justify-center rounded"><FileText className="h-6 w-6 text-muted-foreground" /></div>
-                        <div><p className="font-medium">{m.title}</p><div className="flex items-center gap-3 text-sm text-muted-foreground"><span>{m.language} {m.level}</span><span>⬇ {m.downloads}</span><span>⭐ {m.averageRating}</span></div></div>
+                        <div><p className="font-medium">{m.title}</p><div className="flex items-center gap-3 text-sm text-muted-foreground"><span>{m.language} {m.level}</span><span>⬇ {m.downloads}</span><span>⭐ {m.average_rating}</span></div></div>
                       </Link>
                       <Button variant="ghost" size="sm">Edytuj</Button>
                     </div>

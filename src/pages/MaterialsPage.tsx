@@ -5,19 +5,8 @@ import { Input } from "@/components/Input";
 import { Card, CardContent } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { Search, Download, Grid, List, Loader2, BookOpen } from "lucide-react";
-
-interface Material {
-  id: string;
-  title: string;
-  description?: string;
-  language: string;
-  level: string;
-  type: string;
-  isPremium: boolean;
-  downloads: number;
-  averageRating: number;
-  totalRatings: number;
-}
+import { supabase } from "@/lib/supabase";
+import { Material } from "@/data/materials";
 
 const LANGUAGES = [
   { value: "", label: "Wszystkie języki" },
@@ -49,208 +38,6 @@ const TYPES = [
   { value: "PRESENTATION", label: "Prezentacje" },
 ];
 
-const MOCK_MATERIALS: Material[] = [
-  // Angielski (4)
-  {
-    id: "1",
-    title: "Ćwiczenia na czas Present Perfect",
-    description: "50 ćwiczeń z gramatyki angielskiej z kluczem odpowiedzi",
-    language: "Angielski",
-    level: "B1",
-    type: "TEST",
-    isPremium: false,
-    downloads: 156,
-    averageRating: 4.5,
-    totalRatings: 32,
-  },
-  {
-    id: "2",
-    title: "Fiszki - Słówka biznesowe B2",
-    description: "100 fiszek do nauki języka biznesowego",
-    language: "Angielski",
-    level: "B2",
-    type: "FLASHCARDS",
-    isPremium: false,
-    downloads: 228,
-    averageRating: 4.8,
-    totalRatings: 54,
-  },
-  {
-    id: "3",
-    title: "Test diagnostyczny A1-A2",
-    description: "Test sprawdzający znajomość poziomu podstawowego",
-    language: "Angielski",
-    level: "A2",
-    type: "TEST",
-    isPremium: false,
-    downloads: 89,
-    averageRating: 4.2,
-    totalRatings: 18,
-  },
-  {
-    id: "4",
-    title: "Scenariusz lekcji: Cinema",
-    description: "Gotowy scenariusz na 90 minut z filmem",
-    language: "Angielski",
-    level: "B1",
-    type: "LESSON_PLAN",
-    isPremium: false,
-    downloads: 67,
-    averageRating: 4.6,
-    totalRatings: 12,
-  },
-  // Niemiecki (2)
-  {
-    id: "5",
-    title: "Test diagnostyczny A2 - Niemiecki",
-    description: "Test sprawdzający znajomość poziomu A2",
-    language: "Niemiecki",
-    level: "A2",
-    type: "TEST",
-    isPremium: false,
-    downloads: 67,
-    averageRating: 4.0,
-    totalRatings: 15,
-  },
-  {
-    id: "6",
-    title: "Gramatyka niemiecka - deklinacja",
-    description: "Ćwiczenia z przypadków (der, die, das)",
-    language: "Niemiecki",
-    level: "B1",
-    type: "WORKSHEET",
-    isPremium: false,
-    downloads: 45,
-    averageRating: 4.3,
-    totalRatings: 8,
-  },
-  // Francuski (2)
-  {
-    id: "7",
-    title: "Gramatyka francuska - passé composé",
-    description: "Ćwiczenia z czasu przeszłego",
-    language: "Francuski",
-    level: "B1",
-    type: "WORKSHEET",
-    isPremium: false,
-    downloads: 34,
-    averageRating: 4.7,
-    totalRatings: 9,
-  },
-  {
-    id: "8",
-    title: "Fiszki francuskie - verbs",
-    description: "50 najważniejszych czasowników",
-    language: "Francuski",
-    level: "A1",
-    type: "FLASHCARDS",
-    isPremium: false,
-    downloads: 56,
-    averageRating: 4.5,
-    totalRatings: 11,
-  },
-  // Hiszpański (2)
-  {
-    id: "9",
-    title: "Ćwiczenia - ser vs estar",
-    description: "Różnice w użyciu czasowników być",
-    language: "Hiszpański",
-    level: "A2",
-    type: "WORKSHEET",
-    isPremium: false,
-    downloads: 78,
-    averageRating: 4.6,
-    totalRatings: 21,
-  },
-  {
-    id: "10",
-    title: "Test poziomu A1 - Hiszpański",
-    description: "Test diagnozujący poziom początkujący",
-    language: "Hiszpański",
-    level: "A1",
-    type: "TEST",
-    isPremium: false,
-    downloads: 42,
-    averageRating: 4.4,
-    totalRatings: 7,
-  },
-  // Włoski (2)
-  {
-    id: "11",
-    title: "Gramatyka włoska - artigo",
-    description: "Ćwiczenia z rodzajnika",
-    language: "Włoski",
-    level: "A1",
-    type: "WORKSHEET",
-    isPremium: false,
-    downloads: 29,
-    averageRating: 4.2,
-    totalRatings: 5,
-  },
-  {
-    id: "12",
-    title: "Fiszki włoskie - básico",
-    description: "100 podstawowych słów",
-    language: "Włoski",
-    level: "A1",
-    type: "FLASHCARDS",
-    isPremium: false,
-    downloads: 38,
-    averageRating: 4.5,
-    totalRatings: 8,
-  },
-  // Rosyjski (2)
-  {
-    id: "13",
-    title: "Test poziomu A1 - Rosyjski",
-    description: "Test diagnozujący",
-    language: "Rosyjski",
-    level: "A1",
-    type: "TEST",
-    isPremium: false,
-    downloads: 24,
-    averageRating: 4.1,
-    totalRatings: 4,
-  },
-  {
-    id: "14",
-    title: "Ćwiczenia z cyrylicy",
-    description: "Nauka alfabetu rosyjskiego",
-    language: "Rosyjski",
-    level: "A1",
-    type: "WORKSHEET",
-    isPremium: false,
-    downloads: 31,
-    averageRating: 4.3,
-    totalRatings: 6,
-  },
-  // Polski (2)
-  {
-    id: "15",
-    title: "Test poziomu polskiego B1",
-    description: "Test diagnozujący dla obcokrajowców",
-    language: "Polski",
-    level: "B1",
-    type: "TEST",
-    isPremium: false,
-    downloads: 52,
-    averageRating: 4.7,
-    totalRatings: 14,
-  },
-  {
-    id: "16",
-    title: "Gramatyka polska - odmiana",
-    description: "Ćwiczenia z odmiany rzeczowników",
-    language: "Polski",
-    level: "A2",
-    type: "WORKSHEET",
-    isPremium: false,
-    downloads: 28,
-    averageRating: 4.4,
-    totalRatings: 5,
-  },
-];
-
 export default function MaterialsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -267,33 +54,22 @@ export default function MaterialsPage() {
   const [premiumOnly, setPremiumOnly] = useState(false);
 
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      let filtered = [...MOCK_MATERIALS];
-
-      if (search) {
-        filtered = filtered.filter((m) =>
-          m.title.toLowerCase().includes(search.toLowerCase()),
-        );
-      }
-      if (language) {
-        filtered = filtered.filter(
-          (m) => m.language.toLowerCase() === language,
-        );
-      }
-      if (level) {
-        filtered = filtered.filter((m) => m.level === level);
-      }
-       if (type) {
-         filtered = filtered.filter((m) => m.type === type);
-       }
-       if (premiumOnly) {
-         filtered = filtered.filter((m) => m.isPremium);
-       }
-
-       setMaterials(filtered);
+    const fetchMaterials = async () => {
+      setIsLoading(true);
+      let query = supabase.from('materials').select('*').order('created_at', { ascending: false });
+      
+      if (language) query = query.eq('language', language);
+      if (level) query = query.eq('level', level);
+      if (type) query = query.eq('type', type);
+      if (premiumOnly) query = query.eq('is_premium', true);
+      if (search) query = query.ilike('title', `%${search}%`);
+      
+      const { data } = await query;
+      if (data) setMaterials(data);
       setIsLoading(false);
-    }, 500);
+    };
+    
+    fetchMaterials();
   }, [search, language, level, type, premiumOnly, sort, page]);
 
   const updateParams = (key: string, value: string) => {
@@ -407,7 +183,7 @@ export default function MaterialsPage() {
               <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="aspect-video bg-muted relative flex items-center justify-center">
                   <BookOpen className="h-12 w-12 text-muted-foreground/50" />
-                  {material.isPremium && (
+                  {material.is_premium && (
                     <Badge className="absolute top-2 right-2">Premium</Badge>
                   )}
                 </div>
@@ -428,9 +204,9 @@ export default function MaterialsPage() {
                   </p>
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-1">
-                      <span>⭐ {material.averageRating}</span>
+                      <span>⭐ {material.average_rating}</span>
                       <span className="text-muted-foreground">
-                        ({material.totalRatings})
+                        ({material.total_ratings})
                       </span>
                     </div>
                     <div className="flex items-center gap-1 text-muted-foreground">
@@ -456,7 +232,7 @@ export default function MaterialsPage() {
                     <div className="flex items-center gap-2 mb-1">
                       <Badge variant="outline">{material.language}</Badge>
                       <Badge variant="secondary">{material.level}</Badge>
-                      {material.isPremium && <Badge>Premium</Badge>}
+                      {material.is_premium && <Badge>Premium</Badge>}
                     </div>
                     <h3 className="font-medium mb-1">{material.title}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-1">

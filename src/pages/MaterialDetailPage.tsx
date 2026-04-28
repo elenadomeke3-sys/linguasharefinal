@@ -17,6 +17,8 @@ import {
 import { useAuthStore } from "@/store/authStore";
 import { useUserStore } from "@/store";
 import { materials, getMaterialById } from "@/data/materials";
+import { Material } from "@/data/materials";
+import { supabase } from "@/lib/supabase";
 
 const typeLabels: Record<string, string> = {
   WORKSHEET: "Arkusz ćwiczeń",
@@ -31,6 +33,7 @@ export default function MaterialDetailPage() {
   const { user } = useAuthStore();
   const { getAvailableDownloads } = useUserStore();
   const [material, setMaterial] = useState(materials[0]);
+  const [material, setMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userRating, setUserRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -47,8 +50,14 @@ export default function MaterialDetailPage() {
     setTimeout(() => {
       const foundMaterial = getMaterialById(id || "");
       setMaterial(foundMaterial || materials[0]);
+    const fetchMaterial = async () => {
+      setIsLoading(true);
+      const { data } = await supabase.from('materials').select('*').eq('id', id).single();
+      if (data) setMaterial(data);
       setIsLoading(false);
     }, 300);
+    };
+    if (id) fetchMaterial();
   }, [id]);
 
    const handleDownload = () => {
@@ -59,6 +68,7 @@ export default function MaterialDetailPage() {
      
      const isPremiumUser = user?.user_metadata?.is_premium || false;
      if (material?.isPremium && !isPremiumUser) {
+     if (material?.is_premium && !isPremiumUser) {
       setDownloadError("Ten materiał jest dostępny tylko dla subskrybentów Premium");
       return;
       }
@@ -79,6 +89,12 @@ export default function MaterialDetailPage() {
     URL.revokeObjectURL(url);
     
     setDownloadError(null);
+    if (material?.file_url) {
+      window.open(material.file_url, '_blank');
+      setDownloadError(null);
+    } else {
+      setDownloadError("Plik jest niedostępny.");
+    }
   };
 
   if (isLoading) {
@@ -128,6 +144,7 @@ export default function MaterialDetailPage() {
                     <Badge variant="secondary">{material.level}</Badge>
                     <Badge variant="outline">{typeLabels[material.type]}</Badge>
                     {material.isPremium && (
+                {material.is_premium && (
                       <Badge className="bg-gradient-to-r from-primary to-purple-600">
                         Premium
                       </Badge>
@@ -172,10 +189,12 @@ export default function MaterialDetailPage() {
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                     <span className="font-medium">
                       {material.averageRating}
+                  {material.average_rating}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {material.totalRatings} ocen
+                {material.total_ratings} ocen
                   </p>
                 </div>
                 <div className="text-center">
@@ -189,6 +208,7 @@ export default function MaterialDetailPage() {
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <Clock className="h-4 w-4" />
                     <span className="font-medium">{material.createdAt}</span>
+                <span className="font-medium">{new Date(material.created_at).toLocaleDateString()}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">dodano</p>
                 </div>
@@ -212,9 +232,11 @@ export default function MaterialDetailPage() {
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <span className="font-medium">{material.author.name[0]}</span>
+              <span className="font-medium">{material.author_name[0]}</span>
                 </div>
                 <div>
                   <p className="font-medium">{material.author.name}</p>
+              <p className="font-medium">{material.author_name}</p>
                   <p className="text-sm text-muted-foreground">
                     Twórca materiału
                   </p>
@@ -262,6 +284,7 @@ export default function MaterialDetailPage() {
               {user && !(user.user_metadata?.is_premium) && (
                 <div className="text-sm text-muted-foreground text-center py-2 bg-muted/50 rounded">
                   Pozostało {formatDownloads(getAvailableDownloads())} w tym miesiącu
+              Pozostało {formatDownloads(3)} w tym miesiącu
                 </div>
               )}
               
