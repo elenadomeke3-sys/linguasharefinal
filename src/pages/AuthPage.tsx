@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/Card";
-import { Loader2, User, Camera, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, User, Camera, AlertCircle } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/lib/supabase";
 
