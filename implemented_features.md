@@ -19,3 +19,8 @@
 - status: DONE
 - plan: PLAN_supabase_fetch.md
 - opis: Usunięcie statycznych tablic mockowych. Integracja katalogu materiałów (`MaterialsPage.tsx`) z zapytaniami do bazy Supabase wraz z filtrowaniem. Zrealizowano dynamiczne statystyki w panelach.
+
+## Resetowanie hasła
+- status: DONE
+- plan: PLAN_supabase_reset_password.md
+- opis: Dodanie obsługi funkcji zapomnianego hasła do `AuthPage.tsx` na podstawie mechanizmu Supabase `resetPasswordForEmail`.

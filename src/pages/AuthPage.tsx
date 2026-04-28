@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/Card";
-import { Loader2, User, Camera } from "lucide-react";
+import { Loader2, User, Camera, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/lib/supabase";
 
@@ -18,6 +18,9 @@ export default function AuthPage() {
   const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
@@ -35,18 +38,19 @@ export default function AuthPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     if (!loginData.email || !loginData.password) return;
     setIsLoading(true);
-    
+
     const { error } = await supabase.auth.signInWithPassword({
       email: loginData.email,
       password: loginData.password,
     });
-    
+
     setIsLoading(false);
-    
+
     if (error) {
-      alert("Błąd logowania: Nieprawidłowy e-mail lub hasło.");
+      setError("Błąd logowania: Nieprawidłowy e-mail lub hasło.");
     } else {
       navigate("/dashboard");
     }
@@ -54,9 +58,10 @@ export default function AuthPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     if (!registerData.name || !registerData.email || !registerData.password) return;
     setIsLoading(true);
-    
+
     const { error } = await supabase.auth.signUp({
       email: registerData.email,
       password: registerData.password,
@@ -67,12 +72,13 @@ export default function AuthPage() {
         }
       }
     });
-    
+
     setIsLoading(false);
-    
+
     if (error) {
-      alert("Błąd rejestracji: " + error.message);
+      setError("Błąd rejestracji: " + error.message);
     } else {
+      // Automatyczne logowanie po rejestracji - Supabase powinien auto-login
       navigate("/dashboard");
     }
   };
@@ -88,6 +94,27 @@ export default function AuthPage() {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!loginData.email) {
+      setError("Proszę podać adres e-mail.");
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(loginData.email, {
+      redirectTo: `${window.location.origin}/dashboard`,
+    });
+    setIsLoading(false);
+
+    if (error) {
+      setError("Błąd: " + error.message);
+    } else {
+      setResetEmailSent(true);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4 py-12">
       <div className="w-full max-w-md">
@@ -100,16 +127,54 @@ export default function AuthPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{isLogin ? "Logowanie" : "Rejestracja"}</CardTitle>
+            <CardTitle>
+              {isForgotPassword ? "Reset hasła" : isLogin ? "Logowanie" : "Rejestracja"}
+            </CardTitle>
             <CardDescription>
-              {isLogin
+              {isForgotPassword
+                ? "Podaj swój e-mail, aby otrzymać link do zresetowania hasła."
+                : isLogin
                 ? "Wprowadź dane aby się zalogować"
                 : "Utwórz konto aby dodawać i pobierać materiały"}
             </CardDescription>
           </CardHeader>
 
           <CardContent>
-            {isLogin ? (
+            {error && (
+              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+            {isForgotPassword ? (
+              resetEmailSent ? (
+                <div className="text-center space-y-4 py-4">
+                  <p className="text-green-600 font-medium">Link został wysłany!</p>
+                  <p className="text-sm text-muted-foreground">Sprawdź swoją skrzynkę odbiorczą (oraz folder SPAM) i kliknij w link, aby zalogować się i ustawić nowe hasło.</p>
+                  <Button variant="outline" className="w-full mt-4" onClick={() => { setIsForgotPassword(false); setResetEmailSent(false); }}>
+                    Wróć do logowania
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      value={loginData.email}
+                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Wysyłanie...</> : "Wyślij link resetujący"}
+                  </Button>
+                  <Button type="button" variant="ghost" className="w-full" onClick={() => setIsForgotPassword(false)}>
+                    Wróć do logowania
+                  </Button>
+                </form>
+              )
+            ) : isLogin ? (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Input
@@ -143,6 +208,13 @@ export default function AuthPage() {
                     "Zaloguj się"
                   )}
                 </Button>
+                
+                <div className="text-center mt-2">
+                  <button type="button" className="text-sm text-primary hover:underline" onClick={() => setIsForgotPassword(true)}>
+                    Zapomniałeś hasła?
+                  </button>
+                </div>
+
               </form>
             ) : (
               <form onSubmit={handleRegister} className="space-y-4">
@@ -230,7 +302,8 @@ export default function AuthPage() {
           </CardContent>
         </Card>
 
-        <div className="mt-6 text-center text-sm">
+        {!isForgotPassword && (
+          <div className="mt-6 text-center text-sm">
           {isLogin ? (
             <>
               <span className="text-muted-foreground">Nie masz konta? </span>
@@ -252,7 +325,8 @@ export default function AuthPage() {
               </button>
             </>
           )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

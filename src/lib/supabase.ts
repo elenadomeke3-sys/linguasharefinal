@@ -5,11 +5,26 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Brakuje zmiennych środowiskowych Supabase! Upewnij się, że masz plik .env z VITE_SUPABASE_URL oraz VITE_SUPABASE_ANON_KEY');
+  console.error('❌ Brak zmiennych środowiskowych Supabase! Upewnij się, że plik .env zawiera:');
+  console.error('   VITE_SUPABASE_URL=...');
+  console.error('   VITE_SUPABASE_ANON_KEY=...');
 }
 
-// Eksportujemy gotowego klienta, którego będziemy używać do logowania i pobierania danych
+// Eksportujemy gotowego klienta
 export const supabase = createClient(
-  supabaseUrl || 'https://twoj-projekt.supabase.co',
-  supabaseAnonKey || 'twoj-anon-key'
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  }
 );
+
+// Debugowanie - pokażemy błędy Supabase w konsoli (tylko w dev)
+if (import.meta.env.DEV) {
+  supabase.auth.onAuthStateChange((event, session) => {
+    console.log('🔐 Auth state changed:', event, session?.user?.email);
+  });
+}
