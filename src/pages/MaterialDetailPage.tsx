@@ -15,6 +15,7 @@ import {
   Lock,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import { useUserStore } from "@/store";
 import { Material } from "@/data/materials";
 import { supabase } from "@/lib/supabase";
 
@@ -29,6 +30,7 @@ export default function MaterialDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { getAvailableDownloads } = useUserStore();
   const [material, setMaterial] = useState<Material | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userRating, setUserRating] = useState(0);
@@ -292,7 +294,7 @@ export default function MaterialDetailPage() {
             <CardContent className="space-y-4">
               {user && !(user.user_metadata?.is_premium) && (
                 <div className="text-sm text-muted-foreground text-center py-2 bg-muted/50 rounded">
-                  Pozostało {formatDownloads(3)} w tym miesiącu
+                  Pozostało {formatDownloads(getAvailableDownloads())} w tym miesiącu
                 </div>
               )}
 
