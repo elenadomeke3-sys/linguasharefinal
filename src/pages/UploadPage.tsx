@@ -68,9 +68,6 @@ const TYPE_PATTERNS: Record<string, string> = {
   slajdy: "PRESENTATION",
 };
 
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
 
 function autoDetectTags(title: string): { level: string; type: string; confidence: number } {
   const lower = title.toLowerCase();
@@ -152,7 +149,7 @@ export default function UploadPage() {
         const fileExt = actualFile.name.split('.').pop();
         const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
         
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('materials')
           .upload(fileName, actualFile);
           

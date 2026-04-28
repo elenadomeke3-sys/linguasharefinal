@@ -15,6 +15,7 @@ import {
   Lock,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import { useUserStore } from "@/store";
 import { materials, getMaterialById } from "@/data/materials";
 
 const typeLabels: Record<string, string> = {
@@ -28,6 +29,7 @@ export default function MaterialDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { getAvailableDownloads } = useUserStore();
   const [material, setMaterial] = useState(materials[0]);
   const [isLoading, setIsLoading] = useState(true);
   const [userRating, setUserRating] = useState(0);
@@ -49,14 +51,14 @@ export default function MaterialDetailPage() {
     }, 300);
   }, [id]);
 
-  const handleDownload = () => {
-    if (!user) {
-      setDownloadError("Zaloguj się, aby pobierać materiały");
-      return;
-    }
-    
-    const isPremiumUser = user.user_metadata?.is_premium || false;
-    if (material?.isPremium && !isPremiumUser) {
+   const handleDownload = () => {
+     if (!user) {
+       setDownloadError("Zaloguj się, aby pobierać materiały");
+       return;
+     }
+     
+     const isPremiumUser = user?.user_metadata?.is_premium || false;
+     if (material?.isPremium && !isPremiumUser) {
       setDownloadError("Ten materiał jest dostępny tylko dla subskrybentów Premium");
       return;
       }
@@ -269,7 +271,7 @@ export default function MaterialDetailPage() {
                 </div>
               )}
               
-              {material?.isPremium && !(user.user_metadata?.is_premium) ? (
+               {material?.isPremium && !(user?.user_metadata?.is_premium) ? (
                 <Button 
                   className="w-full" 
                   variant="secondary"
