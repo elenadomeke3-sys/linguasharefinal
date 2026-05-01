@@ -10,11 +10,8 @@ import ProfileEditor from "@/components/ProfileEditor";
 import { X } from "lucide-react";
 import { Input } from "@/components/Input";
 import { Material } from "@/data/materials";
-
-const MOCK_COLLECTIONS = [
-  { id: "1", name: "Gramatyka: Czasowniki Modalne", materialsCount: 12 },
-  { id: "2", name: "Słownictwo: Podróże i Turystyka", materialsCount: 8 },
-];
+import { useCollectionStore } from "@/store/collectionStore";
+import { Collection } from "@/data/materials";
 
 function formatDownloads(count: number): string {
   if (count === 1) return "1 pobranie";
@@ -25,6 +22,7 @@ function formatDownloads(count: number): string {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user, signOut } = useAuthStore();
+  const { collections, fetchCollections } = useCollectionStore();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
@@ -41,8 +39,9 @@ export default function DashboardPage() {
         setIsLoadingMaterials(false);
       };
       fetchMaterials();
+      fetchCollections(user.id);
     }
-  }, [user]);
+  }, [user, fetchCollections]);
 
   if (!user) {
     return (
@@ -201,15 +200,38 @@ export default function DashboardPage() {
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Moje kolekcje</CardTitle><CardDescription>Twoje kolekcje materiałów</CardDescription></div>
-                <Button variant="outline" size="sm"><Plus className="h-4 w-4 mr-2" />Nowa</Button>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div><CardTitle>Moje kolekcje</CardTitle><CardDescription>Zbiory materiałów</CardDescription></div>
+                <Button size="sm" onClick={() => navigate("/collections")}>
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Zarządzaj
+                </Button>
               </CardHeader>
               <CardContent>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {MOCK_COLLECTIONS.map((c) => (
-                    <div key={c.id} className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer"><p className="font-medium mb-1">{c.name}</p><p className="text-sm text-muted-foreground">{c.materialsCount} materiałów</p></div>
-                  ))}
-                </div>
+                {collections.length === 0 ? (
+                  <div className="text-center py-4">
+                    <FolderOpen className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground mb-2">Brak kolekcji</p>
+                    <Button size="sm" onClick={() => navigate("/collections")}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Stwórz kolekcję
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {collections.slice(0, 4).map((c: Collection) => (
+                      <div key={c.id} className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer" onClick={() => navigate("/collections")}>
+                        <p className="font-medium mb-1">{c.name}</p>
+                        <p className="text-sm text-muted-foreground">{c.material_count} materiałów</p>
+                      </div>
+                    ))}
+                    {collections.length > 4 && (
+                      <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer flex items-center justify-center" onClick={() => navigate("/collections")}>
+                        <p className="text-sm text-muted-foreground">Zobacz wszystkie...</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

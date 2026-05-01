@@ -88,6 +88,7 @@ Oddaj 3 materiały → dostajesz nielimitowane pobrania (zastępuje Premium)
 - Upload materiałów z auto-tagging
 - **Edycja materiałów przez autorów** (pełny CRUD)
 - **Usuwanie materiałów przez autorów**
+- **🗂️ System kolekcji materiałów** - organizuj materiały w zbiory
 - Download z liczeniem limitu
 - Dashboard użytkownika
 - Strona cen
@@ -97,7 +98,7 @@ Oddaj 3 materiały → dostajesz nielimitowane pobrania (zastępuje Premium)
 
 ⏳ **Do dodania:**
 - Płatności (Stripe)
-- System kolekcji materiałów
+- Statystyki i analityka
 
 ---
 

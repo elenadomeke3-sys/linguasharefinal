@@ -12,6 +12,7 @@ import FAQPage from "./pages/FAQPage";
 import ContactPage from "./pages/ContactPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import DashboardPage from "./pages/DashboardPage";
+import CollectionsPage from "./pages/CollectionsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuthStore } from "./store/authStore";
 
@@ -36,6 +37,7 @@ function App() {
           <Route path="profile" element={<UserProfilePage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="dashboard/upload" element={<UploadPage />} />
+          <Route path="collections" element={<CollectionsPage />} />
         </Route>
 
         <Route path="pricing" element={<PricingPage />} />

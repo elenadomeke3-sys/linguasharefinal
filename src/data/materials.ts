@@ -28,3 +28,23 @@ export interface Review {
   user_name?: string;
   user_avatar?: string;
 }
+
+export interface Collection {
+  id: string;
+  name: string;
+  description: string | null;
+  user_id: string;
+  is_public: boolean;
+  material_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CollectionMaterial {
+  id: string;
+  collection_id: string;
+  material_id: string;
+  added_at: string;
+  added_by: string;
+  material?: Material; // joined data
+}
