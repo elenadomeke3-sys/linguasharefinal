@@ -21,6 +21,17 @@ export default function UserProfilePage() {
   const [changePasswordStatus, setChangePasswordStatus] = useState("");
   const [myMaterials, setMyMaterials] = useState<Material[]>([]);
   const [isLoadingMaterials, setIsLoadingMaterials] = useState(true);
+  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    description: "",
+    language: "",
+    level: "",
+    type: "",
+    tags: "",
+    isPremium: false,
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -62,6 +73,64 @@ export default function UserProfilePage() {
     await supabase.auth.updateUser({
       data: { full_name: name, avatar_url: avatar }
     });
+  };
+
+  const handleOpenEdit = (material: Material) => {
+    setEditingMaterial(material);
+    setEditForm({
+      title: material.title,
+      description: material.description || "",
+      language: material.language,
+      level: material.level,
+      type: material.type,
+      tags: material.tags?.join(", ") || "",
+      isPremium: material.is_premium,
+    });
+  };
+
+  const handleCloseEdit = () => {
+    setEditingMaterial(null);
+  };
+
+  const handleUpdateMaterial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMaterial) return;
+
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from("materials")
+        .update({
+          title: editForm.title,
+          description: editForm.description,
+          language: editForm.language,
+          level: editForm.level,
+          type: editForm.type,
+          tags: editForm.tags
+            ? editForm.tags.split(",").map((t) => t.trim())
+            : [],
+          is_premium: editForm.isPremium,
+        })
+        .eq("id", editingMaterial.id);
+
+      if (error) throw error;
+
+      // Refresh materials list
+      const { data } = await supabase
+        .from('materials')
+        .select('*')
+        .eq('author_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (data) setMyMaterials(data);
+
+      setEditingMaterial(null);
+    } catch (error: any) {
+      console.error("Update error:", error);
+      alert("Błąd aktualizacji: " + error.message);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -219,7 +288,7 @@ export default function UserProfilePage() {
                       <div><p className="font-medium">{m.title}</p><p className="text-sm text-muted-foreground">{m.language} • {m.level}</p></div>
                     </div>
                     <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => { alert('Edycja wkrótce') }}>Edytuj</Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(m)}>Edytuj</Button>
                     <Button variant="ghost" size="sm" onClick={async () => { 
                       if(confirm('Usunąć materiał?')) {
                         await supabase.from('materials').delete().eq('id', m.id);
@@ -247,6 +316,143 @@ export default function UserProfilePage() {
                 {changePasswordStatus === "error" && <p className="text-sm text-red-500">Nieprawidłowe obecne hasło</p>}
                 {changePasswordStatus === "success" && <p className="text-sm text-green-500">Hasło zmienione</p>}
                 <div className="flex gap-3 pt-2"><Button variant="outline" className="flex-1" onClick={() => setShowChangePassword(false)}>Anuluj</Button><Button className="flex-1" onClick={handleChangePassword} disabled={!newPassword}>Zmień</Button></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Material Modal */}
+        {editingMaterial && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[999999] p-4">
+            <div className="bg-background rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Edytuj materiał</h3>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleCloseEdit}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="p-4">
+                <form onSubmit={handleUpdateMaterial} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tytuł *</label>
+                    <Input
+                      value={editForm.title}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, title: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Opis</label>
+                    <textarea
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={editForm.description}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, description: e.target.value })
+                      }
+                      rows={3}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Język *</label>
+                      <select
+                        className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm w-full"
+                        value={editForm.language}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, language: e.target.value })
+                        }
+                        required
+                      >
+                        <option value="angielski">Angielski</option>
+                        <option value="niemiecki">Niemiecki</option>
+                        <option value="francuski">Francuski</option>
+                        <option value="hiszpanski">Hiszpański</option>
+                        <option value="włoski">Włoski</option>
+                        <option value="rosyjski">Rosyjski</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Poziom *</label>
+                      <select
+                        className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm w-full"
+                        value={editForm.level}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, level: e.target.value })
+                        }
+                        required
+                      >
+                        <option value="A1">A1 - Początkujący</option>
+                        <option value="A2">A2 - Podstawowy</option>
+                        <option value="B1">B1 - Średniozaawansowany</option>
+                        <option value="B2">B2 - Średniozaawansowany+</option>
+                        <option value="C1">C1 - Zaawansowany</option>
+                        <option value="C2">C2 - Biegły</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Typ *</label>
+                      <select
+                        className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm w-full"
+                        value={editForm.type}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, type: e.target.value })
+                        }
+                        required
+                      >
+                        <option value="FLASHCARDS">Słówka / Fiszki</option>
+                        <option value="WORKSHEET">Ćwiczenia</option>
+                        <option value="TEST">Testy</option>
+                        <option value="LESSON_PLAN">Scenariusze lekcji</option>
+                        <option value="EXAM">Sprawdziany</option>
+                        <option value="PRESENTATION">Prezentacje</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Tagi (oddzielone przecinkami)
+                    </label>
+                    <Input
+                      value={editForm.tags}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, tags: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="edit-premium"
+                      checked={editForm.isPremium}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, isPremium: e.target.checked })
+                      }
+                      className="rounded"
+                    />
+                    <label htmlFor="edit-premium" className="text-sm">
+                      Materiał Premium (tylko dla subskrybentów)
+                    </label>
+                  </div>
+                  <div className="flex gap-2 pt-4 border-t">
+                    <Button type="submit" disabled={isUpdating}>
+                      {isUpdating ? "Zapisywanie..." : "Zapisz zmiany"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCloseEdit}
+                    >
+                      Anuluj
+                    </Button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>

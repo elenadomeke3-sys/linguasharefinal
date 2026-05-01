@@ -84,19 +84,21 @@ Oddaj 3 materiały → dostajesz nielimitowane pobrania (zastępuje Premium)
 ✅ **Gotowe:**
 - Katalog materiałów z filtrami (język, poziom, typ)
 - Strona szczegółów z podglądem
-- System logowania/rejestracji
-- **Resetowanie hasła (Zapomniałem hasło)**
+- System logowania/rejestracji z Supabase
+- **Resetowanie hasła (Zapomniałem hasła)**
 - Upload materiałów z auto-tagging
+- **Edycja materiałów przez autorów** (pełny CRUD)
+- **Usuwanie materiałów przez autorów**
 - Download z liczeniem limitu
 - Dashboard użytkownika
 - Strona cen
-- 16 przykładowych materiałów
+- System ocen i recenzji
+- Pełna integracja z Supabase (baza + storage + auth)
+- Wszystkie przyciski i opcje są klikalne i funkcjonalne
 
 ⏳ **Do dodania:**
-- Backend (Supabase/Firebase) — aktualna integracja w toku
 - Płatności (Stripe)
-- Pełna weryfikacja email
-- System ocen i komentarzy
+- System kolekcji materiałów
 
 ---
 
@@ -235,6 +237,42 @@ Allowed methods: GET, POST, PUT, DELETE, OPTIONS
 Allowed headers: *
 Max age: 3600
 ```
+
+---
+
+## 🚀 Wgranie na GitHub
+
+### Krok 1: Przygotuj repozytorium
+```bash
+# Jeśli jeszcze nie masz repozytorium
+git init
+git add .
+git commit -m "Initial commit: LinguaShare MVP"
+
+# Dodaj remote (zmień na swoje dane)
+git remote add origin https://github.com/TWOJ-NAZWA/linguashare.git
+```
+
+### Krok 2: Wypchnij na GitHub
+```bash
+# Wypchnij wszystkie zmiany
+git push origin main
+
+# Jeśli to pierwsze wypchnięcie
+git push -u origin main
+```
+
+### Krok 3: Skonfiguruj GitHub Pages (opcjonalnie)
+1. Wejdź w swoje repozytorium na GitHub
+2. **Settings** → **Pages**
+3. **Source**: wybierz "Deploy from a branch"
+4. **Branch**: `main` i folder `/root`
+5. **Save** - strona będzie dostępna pod `https://TWOJ-NAZWA.github.io/linguashare`
+
+### Krok 4: Zmiene środowiskowe na GitHub
+Jeśli hostujesz na GitHub Pages lub Vercel, dodaj zmienne środowiskowe:
+- `VITE_SUPABASE_URL` - URL Twojego projektu Supabase
+- `VITE_SUPABASE_ANON_KEY` - Klucz publiczny Supabase
 
 ---
 

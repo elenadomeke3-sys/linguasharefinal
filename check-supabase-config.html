@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Supabase Reset Password</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .test-btn { background: #007bff; color: white; }
+        .test-btn:hover { background: #0056b3; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 3px; width: 300px; }
+        code { background: #f4f4f4; padding: 2px 5px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test Konfiguracji Supabase - Reset Hasła</h1>
+    
+    <div id="config-status">
+        <h2>Krok 1: Sprawdzenie konfiguracji</h2>
+        <div id="config-result"></div>
+        <button onclick="checkConfig()" class="test-btn">Sprawdź konfigurację</button>
+    </div>
+
+    <div id="reset-test">
+        <h2>Krok 2: Test resetowania hasła</h2>
+        <p>Podaj email do testowania (musi istnieć w bazie Supabase):</p>
+        <input type="email" id="test-email" placeholder="test@example.com">
+        <button onclick="testPasswordReset()" class="test-btn">Wyślij email resetujący</button>
+        <div id="reset-result"></div>
+    </div>
+
+    <div id="auth-test">
+        <h2>Krok 3: Test autentykacji</h2>
+        <button onclick="testAuth()" class="test-btn">Test połączenia z auth</button>
+        <div id="auth-result"></div>
+    </div>
+
+    <div id="instructions">
+        <h2>📋 Instrukcje sprawdzania w Dashboard Supabase</h2>
+        <ol>
+            <li><strong>Authentication → Email Templates:</strong>
+                <ul>
+                    <li>Sprawdź czy szablon "Reset Password" istnieje</li>
+                    <li>Kliknij "Reset Password" → zobacz podgląd emaila</li>
+                </ul>
+            </li>
+            <li><strong>Settings → Authentication:</strong>
+                <ul>
+                    <li><strong>Site URL:</strong> powinno być <code>https://linguashare.vercel.app</code></li>
+                    <li><strong>Redirect URLs:</strong> powinno zawierać:
+                        <ul>
+                            <li><code>https://linguashare.vercel.app/reset-password</code></li>
+                            <li><code>https://linguashare.vercel.app/auth</code></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li><strong>Settings → Email:</strong>
+                <ul>
+                    <li>Sprawdź czy jest skonfigurowany provider (domyślny Supabase lub custom SMTP)</li>
+                    <li>Jeśli używasz darmowej wersji, domena musi być potwierdzona</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <script>
+        let supabase = null;
+
+        async function checkConfig() {
+            const resultDiv = document.getElementById('config-result');
+            resultDiv.innerHTML = '<div class="info">Sprawdzanie konfiguracji...</div>';
+
+            try {
+                // Pobierz zmienne środowiskowe z .env.example jako fallback
+                const supabaseUrl = 'https://your-project.supabase.co'; // ZMIEŃ!
+                const supabaseAnonKey = 'your-anon-key'; // ZMIEŃ!
+
+                // Spróbuj użyć zmiennych z localStorage jeśli istnieją
+                const savedUrl = localStorage.getItem('supabase_url');
+                const savedKey = localStorage.getItem('supabase_anon_key');
+
+                const url = savedUrl || supabaseUrl;
+                const key = savedKey || supabaseAnonKey;
+
+                if (url === 'https://your-project.supabase.co' || key === 'your-anon-key') {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ Musisz podać prawdziwe dane Supabase!<br>
+                            Użyj konsoli developmentowej lub zaktualizuj zmienne:
+                            <br><br>
+                            <input type="text" id="url-input" placeholder="Supabase URL" value="${url}">
+                            <input type="text" id="key-input" placeholder="Supabase Anon Key" value="${key}">
+                            <button onclick="saveConfig()">Zapisz</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                supabase = createClient(url, key);
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        ✅ Supabase client utworzony pomyślnie<br>
+                        📡 URL: <code>${url}</code><br>
+                        🔑 Klucz: ${key.substring(0, 10)}...
+                    </div>
+                `;
+
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Błąd konfiguracji: ${error.message}</div>`;
+            }
+        }
+
+        function saveConfig() {
+            const url = document.getElementById('url-input').value;
+            const key = document.getElementById('key-input').value;
+            
+            localStorage.setItem('supabase_url', url);
+            localStorage.setItem('supabase_anon_key', key);
+            
+            checkConfig();
+        }
+
+        async function testPasswordReset() {
+            const resultDiv = document.getElementById('reset-result');
+            const email = document.getElementById('test-email').value;
+
+            if (!email) {
+                resultDiv.innerHTML = '<div class="error">❌ Podaj email do testowania</div>';
+                return;
+            }
+
+            if (!supabase) {
+                resultDiv.innerHTML = '<div class="error">❌ Najpierw sprawdź konfigurację</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="info">📤 Wysyłanie emaila resetującego...</div>';
+
+            try {
+                const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/reset-password`,
+                });
+
+                if (error) {
+                    let errorMsg = error.message;
+                    
+                    // Najczęstsze błędy i ich rozwiązania
+                    if (error.message.includes('Email not confirmed')) {
+                        errorMsg += '<br><br>💡 Rozwiązanie: Użytkownik musi potwierdzić email przed resetowaniem hasła.';
+                    } else if (error.message.includes('User not found')) {
+                        errorMsg += '<br><br>💡 Rozwiązanie: Sprawdź czy email istnieje w bazie użytkowników.';
+                    } else if (error.message.includes('Email rate limit')) {
+                        errorMsg += '<br><br>💡 Rozwiązanie: Odczekaj kilka minut przed kolejną próbą.';
+                    }
+
+                    resultDiv.innerHTML = `<div class="error">❌ Błąd: ${errorMsg}</div>`;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Email resetujący wysłany pomyślnie!<br>
+                            📧 Sprawdź skrzynkę odbiorczą (i folder SPAM)<br>
+                            🔄 Link będzie ważny przez 1 godzinę
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Błąd krytyczny: ${error.message}</div>`;
+            }
+        }
+
+        async function testAuth() {
+            const resultDiv = document.getElementById('auth-result');
+
+            if (!supabase) {
+                resultDiv.innerHTML = '<div class="error">❌ Najpierw sprawdź konfigurację</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="info">🔍 Testowanie połączenia z auth...</div>';
+
+            try {
+                // Test pobierania sesji
+                const { data: { session }, error } = await supabase.auth.getSession();
+
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">❌ Błąd sesji: ${error.message}</div>`;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Połączenie z Supabase Auth działa!<br>
+                            👤 Zalogowany: ${session ? 'Tak' : 'Nie'}<br>
+                            📧 Email: ${session?.user?.email || 'Brak'}
+                        </div>
+                    `;
+                }
+
+                // Test nasłuchiwania zmian auth
+                supabase.auth.onAuthStateChange((event, session) => {
+                    console.log('🔄 Auth state changed:', event, session?.user?.email);
+                });
+
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Błąd połączenia: ${error.message}</div>`;
+            }
+        }
+
+        // Automatyczne sprawdzenie przy ładowaniu
+        window.addEventListener('load', () => {
+            checkConfig();
+        });
+    </script>
+</body>
+</html>
