@@ -11,6 +11,7 @@ import AboutPage from "./pages/AboutPage";
 import FAQPage from "./pages/FAQPage";
 import ContactPage from "./pages/ContactPage";
 import UserProfilePage from "./pages/UserProfilePage";
+import DashboardPage from "./pages/DashboardPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import { useAuthStore } from "./store/authStore";
@@ -35,7 +36,7 @@ function App() {
         {/* Widoki chronione przed niezalogowanymi gośćmi */}
         <Route element={<ProtectedRoute />}>
           <Route path="profile" element={<UserProfilePage />} />
-          <Route path="dashboard" element={<UserProfilePage />} /> {/* alias = profile */}
+          <Route path="dashboard" element={<DashboardPage />} />
           <Route path="dashboard/upload" element={<UploadPage />} />
         </Route>
 
