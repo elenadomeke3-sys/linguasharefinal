@@ -18,8 +18,6 @@ export default function AuthPage() {
   const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
-  const [isForgotPassword, setIsForgotPassword] = useState(false);
-  const [resetEmailSent, setResetEmailSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -94,27 +92,6 @@ export default function AuthPage() {
     }
   };
 
-   const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (!loginData.email) {
-      setError("Proszę podać adres e-mail.");
-      return;
-    }
-
-    setIsLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(loginData.email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setIsLoading(false);
-
-    if (error) {
-      setError("Błąd: " + error.message);
-    } else {
-      setResetEmailSent(true);
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4 py-12">
       <div className="w-full max-w-md">
@@ -128,12 +105,10 @@ export default function AuthPage() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {isForgotPassword ? "Reset hasła" : isLogin ? "Logowanie" : "Rejestracja"}
+              {isLogin ? "Logowanie" : "Rejestracja"}
             </CardTitle>
             <CardDescription>
-              {isForgotPassword
-                ? "Podaj swój e-mail, aby otrzymać link do zresetowania hasła."
-                : isLogin
+              {isLogin
                 ? "Wprowadź dane aby się zalogować"
                 : "Utwórz konto aby dodawać i pobierać materiały"}
             </CardDescription>
@@ -146,35 +121,7 @@ export default function AuthPage() {
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
-            {isForgotPassword ? (
-              resetEmailSent ? (
-                <div className="text-center space-y-4 py-4">
-                  <p className="text-green-600 font-medium">Link został wysłany!</p>
-                  <p className="text-sm text-muted-foreground">Sprawdź swoją skrzynkę odbiorczą (oraz folder SPAM) i kliknij w link, aby zalogować się i ustawić nowe hasło.</p>
-                  <Button variant="outline" className="w-full mt-4" onClick={() => { setIsForgotPassword(false); setResetEmailSent(false); }}>
-                    Wróć do logowania
-                  </Button>
-                </div>
-              ) : (
-                <form onSubmit={handleResetPassword} className="space-y-4">
-                  <div className="space-y-2">
-                    <Input
-                      type="email"
-                      placeholder="Email"
-                      value={loginData.email}
-                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Wysyłanie...</> : "Wyślij link resetujący"}
-                  </Button>
-                  <Button type="button" variant="ghost" className="w-full" onClick={() => setIsForgotPassword(false)}>
-                    Wróć do logowania
-                  </Button>
-                </form>
-              )
-            ) : isLogin ? (
+            {isLogin ? (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Input
@@ -208,12 +155,6 @@ export default function AuthPage() {
                     "Zaloguj się"
                   )}
                 </Button>
-                
-                <div className="text-center mt-2">
-                  <button type="button" className="text-sm text-primary hover:underline" onClick={() => setIsForgotPassword(true)}>
-                    Zapomniałeś hasła?
-                  </button>
-                </div>
 
               </form>
             ) : (
@@ -302,8 +243,7 @@ export default function AuthPage() {
           </CardContent>
         </Card>
 
-        {!isForgotPassword && (
-          <div className="mt-6 text-center text-sm">
+        <div className="mt-6 text-center text-sm">
           {isLogin ? (
             <>
               <span className="text-muted-foreground">Nie masz konta? </span>
@@ -325,8 +265,7 @@ export default function AuthPage() {
               </button>
             </>
           )}
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
