@@ -384,23 +384,23 @@ export default function MaterialDetailPage() {
                     )}
                     {user?.id === material.author_id && (
                       <div className="flex gap-2 ml-auto">
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        <button
+                          type="button"
                           onClick={handleOpenEdit}
+                          className="inline-flex items-center rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-accent"
                         >
                           <Edit className="h-4 w-4 mr-1" />
                           Edytuj
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
+                        </button>
+                        <button
+                          type="button"
                           onClick={handleDeleteMaterial}
                           disabled={isUpdating}
+                          className="inline-flex items-center rounded-md border border-destructive bg-destructive px-3 py-1.5 text-sm text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
                         >
                           <Trash2 className="h-4 w-4 mr-1" />
                           Usuń
-                        </Button>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -821,8 +821,8 @@ export default function MaterialDetailPage() {
 
       {/* Edit Material Modal */}
       {isEditingMaterial && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000000] p-4">
-          <div className="bg-background rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[999999] p-4">
+          <div className="bg-background rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="sticky top-0 bg-background border-b p-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold">Edytuj materiał</h3>
               <Button

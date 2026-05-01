@@ -10,23 +10,31 @@ interface AuthState {
   signOut: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  session: null,
-  isLoading: true,
+export const useAuthStore = create<AuthState>((set) => {
+  let subscription: { unsubscribe: () => void } | null = null;
 
-  initialize: () => {
-    // Nasłuchujemy na zmiany sesji — callback wywoła się NATYCHMIAST z aktualnym stanem
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      set({ session, user: session?.user ?? null, isLoading: false });
-    });
+  return {
+    user: null,
+    session: null,
+    isLoading: true,
 
-    // Zwracamy funkcję czyszczącą
-    return () => subscription.unsubscribe();
-  },
+    initialize: () => {
+      // Jeśli już mamy subskrypcję, najpierw ją czyścimy
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+
+      // Nasłuchujemy na zmiany sesji — callback wywoła się NATYCHMIAST z aktualnym stanem
+      const { data: { subscription: newSubscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        set({ session, user: session?.user ?? null, isLoading: false });
+      });
+
+      subscription = newSubscription;
+    },
 
   signOut: async () => {
     await supabase.auth.signOut();
     set({ user: null, session: null, isLoading: false });
   },
-}));
+  };
+});
